@@ -1379,7 +1379,7 @@ function Slide09() {
                   </marker>
                 </defs>
                 <rect x={10} y={95} width={120} height={52} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Front 2.0</text>
+                <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">New Front</text>
                 <text x={70} y={136} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">Centralizado</text>
                 <rect x={170} y={10} width={130} height={220} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
                 <text x={235} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">API Gateway</text>

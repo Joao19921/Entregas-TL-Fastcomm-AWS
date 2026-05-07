@@ -1,7 +1,43 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Maximize2, Minimize2, Grid, ChevronLeft, ChevronRight } from 'lucide-react'
 import { slides } from './slides'
+
+const SLIDE_W = 1330
+const SLIDE_H = 750
+
+function ScaledSlide({ Slide }: { Slide: () => JSX.Element }) {
+  const outerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const el = outerRef.current
+    if (!el) return
+    const measure = () => setScale(el.offsetWidth / SLIDE_W)
+    measure()
+    const obs = new ResizeObserver(measure)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <div ref={outerRef} style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+      {scale !== null && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: SLIDE_W,
+          height: SLIDE_H,
+          transformOrigin: 'top left',
+          transform: `scale(${scale})`,
+        }}>
+          <Slide />
+        </div>
+      )}
+    </div>
+  )
+}
 
 type Mode = 'scroll' | 'present'
 
@@ -111,7 +147,7 @@ export default function App() {
                 transition={{ type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }}
                 className="absolute inset-0 rounded-lg overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
               >
-                <CurrentSlide />
+                <ScaledSlide Slide={CurrentSlide} />
               </motion.div>
             </AnimatePresence>
           </div>
@@ -187,17 +223,9 @@ export default function App() {
                       }`}
                       style={{ aspectRatio: '1330/750' }}
                     >
-                      {/* Miniature slide — scale down 4× */}
-                      <div
-                        className="absolute top-0 left-0 origin-top-left"
-                        style={{
-                          width: '400%',
-                          height: '400%',
-                          transform: 'scale(0.25)',
-                          pointerEvents: 'none',
-                        }}
-                      >
-                        <S />
+                      {/* Miniature slide — scaled via ScaledSlide */}
+                      <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+                        <ScaledSlide Slide={S} />
                       </div>
                       <div className="absolute bottom-1 left-1.5 text-white text-[9px] bg-black/60 px-1.5 py-0.5 rounded font-mono">
                         {i + 1}
@@ -251,7 +279,7 @@ export default function App() {
             }}
             title={`Slide ${i + 1}: ${title} — clique para apresentar`}
           >
-            <Slide />
+            <ScaledSlide Slide={Slide} />
           </motion.div>
         ))}
       </div>
