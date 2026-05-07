@@ -337,7 +337,7 @@
                         interno representa entre <strong>R$ 6.708</strong> e <strong>R$ 20.898</strong> no período.</li>
                 </ul>
 
-                <h2 id="case-custos">☁️ Case: Otimização de Custos – Conta HML (Homologação)</h2>
+                <h2>☁️ Case: Otimização de Custos – Conta HML (Homologação)</h2>
                 <p>Um exemplo concreto da importância do apoio de Yago Costa na frente de infraestrutura é a
                     <strong>otimização
                         da conta AWS de Homologação (HML)</strong>. Abaixo, os dados reais extraídos do AWS Cost
@@ -655,7 +655,19 @@
             </summary>
             <div style="padding: 20px;">
 
-                <h3>📅 Janeiro 2026</h3>
+                <div
+                    style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 0 0 14px 0; padding: 10px 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #555;">Filtrar listas:</span>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #333;">
+                        <input type="checkbox" id="toggle-janeiro" checked> Janeiro 2026
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #333;">
+                        <input type="checkbox" id="toggle-fevereiro" checked> Fevereiro 2026
+                    </label>
+                </div>
+
+                <div id="lista-janeiro">
+                    <h3>📅 Janeiro 2026</h3>
                 <table>
                     <thead>
                         <tr>
@@ -686,7 +698,10 @@
                                         style="max-width: 480px; width: 100%; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                 </div>
                             </td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">07h30</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>07h30</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 3</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>9877</td>
@@ -732,7 +747,10 @@
                             <td><span class="entry-icon icon-feature"><i class="fa-solid fa-lightbulb"></i></span>
                                 [Feature]
                                 Atualização do Link de Ajuda para o GitBook</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">09h30</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>09h30</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 1</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>9741</td>
@@ -795,17 +813,19 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
 
-                <h3>📅 Fevereiro 2026</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Entrega</th>
-                            <th style="white-space: nowrap;">⏱️ Horas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div id="lista-fevereiro">
+                    <h3>📅 Fevereiro 2026</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Entrega</th>
+                                <th style="white-space: nowrap;">⏱️ Horas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         <tr>
                             <td>10042</td>
                             <td><span class="entry-icon"><img
@@ -820,7 +840,10 @@
                                         style="max-width: 480px; width: 100%; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #232f3e;">
                                 </div>
                             </td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">20h00</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>20h00</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 4</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>9956</td>
@@ -828,7 +851,10 @@
                                 [Débito técnico]
                                 Popular request_size e response_size no ClickHouse para Observabilidade de Pipelines
                             </td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">15h00</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>15h00</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 2</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>9922</td>
@@ -850,13 +876,10 @@
                                         style="max-width: 480px; width: 100%; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
                                 </div>
                             </td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">162h00</td>
-                        </tr>
-                        <tr>
-                            <td>9957</td>
-                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug]
-                                execution_logs.realm está vindo NULL para 100% das execuções</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">07h30</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>162h00</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 15</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>9857</td>
@@ -888,13 +911,10 @@
                                     </div>
                                 </div>
                             </td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">43h00</td>
-                        </tr>
-                        <tr>
-                            <td>9995</td>
-                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug] Pipelines
-                                incorretos no realm='cassems' em execution_logs (ClickHouse)</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">67h00</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>43h00</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 3</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>6626</td>
@@ -911,35 +931,30 @@
                                         style="max-width: 480px; width: 100%; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;">
                                 </div>
                             </td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">8h00</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>8h00</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 1</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>7071</td>
                             <td><span class="entry-icon icon-security"><i class="fa-solid fa-shield-halved"></i></span>
                                 [Débito
                                 técnico][Segurança] Restrição de Acesso a APIs Não Publicadas ou em Draft</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">09h30</td>
-                        </tr>
-                        <tr>
-                            <td>10011</td>
-                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug] Erro ao
-                                realizar
-                                testes em sequência no ambiente onpremisse (Moinhos)</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">30h30</td>
-                        </tr>
-                        <tr>
-                            <td>9787</td>
-                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug] Correção
-                                de
-                                ordenação e validação obrigatória no front do Engine</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">48h00</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>09h30</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 3</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>9790</td>
                             <td><span class="entry-icon icon-debito"><i class="fa-solid fa-wrench"></i></span> [Débito
                                 técnico]
                                 Funcionamento da tela de relatórios no on-premise</td>
-                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">35h52</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>35h52</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 3</div>
+                            </td>
                         </tr>
                         <tr>
                             <td>10005</td>
@@ -976,8 +991,41 @@
                                 [Feature] Fluxo de exceção</td>
                             <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">15h00</td>
                         </tr>
-                    </tbody>
-                </table>
+                        <tr>
+                            <td>9957</td>
+                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug]
+                                execution_logs.realm está vindo NULL para 100% das execuções</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>07h30</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 1</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>9995</td>
+                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug] Pipelines
+                                incorretos no realm='cassems' em execution_logs (ClickHouse)</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">
+                                <div>67h00</div>
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">Quantidade de atividade = 4</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>10011</td>
+                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug] Erro ao
+                                realizar
+                                testes em sequência no ambiente onpremisse (Moinhos)</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">30h30</td>
+                        </tr>
+                        <tr>
+                            <td>9787</td>
+                            <td><span class="entry-icon icon-bug"><i class="fa-solid fa-bug"></i></span> [Bug] Correção
+                                de
+                                ordenação e validação obrigatória no front do Engine</td>
+                            <td style="font-weight: bold; color: #0056b3; white-space: nowrap;">48h00</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <!-- PLANO DE AÇÃO - REESTRUTURAÇÃO DO TIME -->
 
@@ -1182,7 +1230,7 @@
                         <i class="fa-solid fa-file-lines" style="color: #ff9900; margin-right: 6px;"></i>CloudWatch Logs
                         – Ajuste de Retenção
                         <span
-                            style="background: #ede9fe; color: #6f42c1; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 8px;">Jan/2025</span>
+                            style="background: #ede9fe; color: #6f42c1; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 8px;">Jan/2026</span>
                     </h4>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
                         <div
@@ -1812,11 +1860,29 @@
                     </li>
                 </ul>
             </div>
-
-    </div>
     </details>
 
     </div>
+
+    <script>
+        (function () {
+            const toggleJaneiro = document.getElementById('toggle-janeiro');
+            const toggleFevereiro = document.getElementById('toggle-fevereiro');
+            const listaJaneiro = document.getElementById('lista-janeiro');
+            const listaFevereiro = document.getElementById('lista-fevereiro');
+
+            if (!toggleJaneiro || !toggleFevereiro || !listaJaneiro || !listaFevereiro) return;
+
+            const aplicarFiltro = function () {
+                listaJaneiro.style.display = toggleJaneiro.checked ? 'block' : 'none';
+                listaFevereiro.style.display = toggleFevereiro.checked ? 'block' : 'none';
+            };
+
+            toggleJaneiro.addEventListener('change', aplicarFiltro);
+            toggleFevereiro.addEventListener('change', aplicarFiltro);
+            aplicarFiltro();
+        })();
+    </script>
 </body>
 
 </html>
