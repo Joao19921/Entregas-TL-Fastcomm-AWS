@@ -140,7 +140,7 @@ function SN({ n, dark = false }: { n: number; dark?: boolean }) {
         zIndex: 5,
       }}
     >
-      {n} / 14
+      {n} / 13
     </div>
   )
 }
@@ -1217,8 +1217,8 @@ function Slide07() {
   )
 }
 
-// ─── SLIDE 08: Current Architecture ──────────────────────────
-function Slide08() {
+// ─── SLIDE 08: Target Architecture 1.6 ───────────────────────
+function Slide09() {
   return (
     <div
       style={{
@@ -1241,136 +1241,12 @@ function Slide08() {
               letterSpacing: -0.5,
             }}
           >
-            Arquitetura atual — pós-1.5
+            Arquitetura alvo 1.6
           </h1>
         </Fade>
         <Fade delay={0.05}>
           <p style={{ margin: '8px 0 0', fontSize: 16, color: C.textMuted }}>
-            Componentes que estão em produção hoje e que servem de base para a 2.0
-          </p>
-        </Fade>
-        <Fade delay={0.15} style={{ marginTop: 18, flex: 1, width: '100%' }}>
-          <svg
-            viewBox="0 0 1200 540"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="xMidYMid meet"
-            style={{ width: '100%', height: '100%' }}
-          >
-            <defs>
-              <marker
-                id="ah8"
-                viewBox="0 0 10 10"
-                refX={9}
-                refY={5}
-                markerWidth={7}
-                markerHeight={7}
-                orient="auto"
-              >
-                <path d="M0,0 L10,5 L0,10 z" fill="#5F5E5A" />
-              </marker>
-            </defs>
-            <rect x={20} y={240} width={140} height={80} rx={6} fill="white" stroke="#85B7EB" strokeWidth={2} />
-            <text x={90} y={275} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Front</text>
-            <text x={90} y={295} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Fastcomm / Engine</text>
-            <rect x={220} y={100} width={160} height={380} rx={6} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-            <text x={300} y={130} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">API Gateway</text>
-            <text x={300} y={150} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fill="#5F5E5A">NGINX</text>
-            <line x1={240} y1={170} x2={360} y2={170} stroke="#E8EEF7" strokeWidth={1} />
-            <text x={300} y={195} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#1F2328">Controle de acesso</text>
-            <text x={300} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#1F2328">Controle de</text>
-            <text x={300} y={231} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#1F2328">comportamento</text>
-            <rect x={440} y={120} width={180} height={68} rx={6} fill="white" stroke="#85B7EB" strokeWidth={2} />
-            <text x={530} y={148} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Core</text>
-            <text x={530} y={170} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">API de domínio</text>
-            <rect x={440} y={220} width={180} height={68} rx={6} fill="white" stroke="#85B7EB" strokeWidth={2} />
-            <text x={530} y={248} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Engine</text>
-            <text x={530} y={270} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Mapeamentos / Pipelines</text>
-            <rect x={440} y={320} width={180} height={68} rx={6} fill="white" stroke="#85B7EB" strokeWidth={2} />
-            <text x={530} y={348} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Orquestrador</text>
-            <text x={530} y={370} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Distribui jobs</text>
-            <rect x={440} y={420} width={180} height={60} rx={6} fill="white" stroke="#85B7EB" strokeWidth={2} />
-            <text x={530} y={450} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Log</text>
-            <text x={530} y={468} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Coletor</text>
-            <rect x={700} y={320} width={160} height={68} rx={6} fill="white" stroke="#85B7EB" strokeWidth={2} />
-            <text x={780} y={348} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Executor</text>
-            <text x={780} y={370} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Workers de pipeline</text>
-            <rect x={950} y={120} width={200} height={100} rx={6} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-            <text x={1050} y={148} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Postgres</text>
-            <text x={1050} y={170} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">fastcomm-db</text>
-            <text x={1050} y={188} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">schemas: engine · core</text>
-            <rect x={950} y={320} width={200} height={68} rx={6} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-            <text x={1050} y={348} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">ClickHouse</text>
-            <text x={1050} y={370} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Logs e execuções</text>
-            <rect x={950} y={420} width={200} height={60} rx={6} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-            <text x={1050} y={450} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={14} fontWeight={700} fill="#0E1E3A">Grafana</text>
-            <text x={1050} y={468} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={11} fill="#5F5E5A">Observabilidade</text>
-            <line x1={160} y1={280} x2={218} y2={280} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={380} y1={154} x2={438} y2={154} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={380} y1={254} x2={438} y2={254} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={380} y1={354} x2={438} y2={354} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={380} y1={450} x2={438} y2={450} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={438} y1={278} x2={382} y2={278} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <text x={395} y={298} fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A" fontStyle="italic">agendamentos</text>
-            <line x1={530} y1={320} x2={530} y2={290} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={620} y1={354} x2={698} y2={354} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={620} y1={154} x2={948} y2={154} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={620} y1={240} x2={948} y2={180} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={860} y1={335} x2={1040} y2={220} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={860} y1={365} x2={948} y2={354} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={620} y1={450} x2={948} y2={380} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-            <line x1={1050} y1={388} x2={1050} y2={418} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah8)" />
-          </svg>
-        </Fade>
-        <Fade delay={0.3}>
-          <p
-            style={{
-              marginTop: 8,
-              fontSize: 11,
-              color: C.textMuted,
-              fontStyle: 'italic',
-            }}
-          >
-            Caixas com borda azul = serviços do Fastcomm · Caixas com borda
-            escura = infraestrutura compartilhada · Postgres único com schemas
-            separados por serviço
-          </p>
-        </Fade>
-      </div>
-      <SF text="FastComm 2.0 · Arquitetura" />
-    </div>
-  )
-}
-
-// ─── SLIDE 09: Target Architecture 2.0 ───────────────────────
-function Slide09() {
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: C.white,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <SN n={9} />
-      <div style={body}>
-        <Fade>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 36,
-              fontWeight: 700,
-              color: C.navy,
-              letterSpacing: -0.5,
-            }}
-          >
-            Arquitetura alvo 2.0
-          </h1>
-        </Fade>
-        <Fade delay={0.05}>
-          <p style={{ margin: '8px 0 0', fontSize: 16, color: C.textMuted }}>
-            Mantém o núcleo pós-1.5 e adiciona a camada de IA — sem reescrever
+            Evolução incremental sobre o núcleo existente — sem reescrever
             o que já funciona
           </p>
         </Fade>
@@ -1601,7 +1477,7 @@ function Slide10() {
         overflow: 'hidden',
       }}
     >
-      <SN n={10} />
+      <SN n={9} />
       <div style={body}>
         <Fade>
           <h1
@@ -1879,7 +1755,7 @@ function Slide11() {
         overflow: 'hidden',
       }}
     >
-      <SN n={11} />
+      <SN n={10} />
       <div style={body}>
         <Fade>
           <h1
@@ -2003,7 +1879,7 @@ function Slide12() {
         overflow: 'hidden',
       }}
     >
-      <SN n={12} />
+      <SN n={11} />
       <div style={body}>
         <Fade>
           <h1
@@ -2191,7 +2067,7 @@ function Slide13() {
         overflow: 'hidden',
       }}
     >
-      <SN n={13} dark />
+      <SN n={12} dark />
       <div
         style={{
           position: 'absolute',
@@ -2296,7 +2172,7 @@ function Slide14() {
         overflow: 'hidden',
       }}
     >
-      <SN n={14} dark />
+      <SN n={13} dark />
       <div
         style={{
           position: 'absolute',
@@ -2373,8 +2249,7 @@ export const slides: { title: string; component: () => JSX.Element }[] = [
   { title: 'Frentes em andamento', component: Slide05 },
   { title: 'Direção proposta', component: Slide06 },
   { title: 'Arquitetura de IA', component: Slide07 },
-  { title: 'Arquitetura atual', component: Slide08 },
-  { title: 'Arquitetura alvo 2.0', component: Slide09 },
+  { title: 'Arquitetura alvo 1.6', component: Slide09 },
   { title: 'Estratégia de implementação', component: Slide10 },
   { title: 'Decisões de arquitetura', component: Slide11 },
   { title: 'Roadmap', component: Slide12 },
