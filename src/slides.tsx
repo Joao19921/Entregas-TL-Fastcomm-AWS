@@ -1416,20 +1416,23 @@ function Slide09() {
           <div
             style={{
               marginTop: 8,
-              background: 'linear-gradient(135deg, #F4F6FB 0%, #FFF3EF 100%)',
               border: `1.5px solid ${C.coral}`,
               borderRadius: 8,
-              padding: '10px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
+              overflow: 'hidden',
             }}
           >
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div>
-                <span
-                  style={{ fontSize: 11, fontWeight: 700, color: C.coral }}
-                >
+            {/* New Front — description + Figma link */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #F4F6FB 0%, #FFF3EF 100%)',
+                padding: '10px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.coral }}>
                   New Front ·{' '}
                 </span>
                 <span style={{ fontSize: 11, color: C.navy, lineHeight: 1.6 }}>
@@ -1441,53 +1444,113 @@ function Slide09() {
                   melhor versão que o FastComm já teve.
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span
+              <a
+                href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2,
+                  background: C.coral,
+                  color: 'white',
+                  borderRadius: 6,
+                  padding: '8px 14px',
+                  textDecoration: 'none',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                <span>Design</span>
+                <span style={{ fontSize: 15 }}>↗</span>
+              </a>
+            </div>
+            {/* Security emphasis section */}
+            <div
+              style={{
+                background: C.navy,
+                padding: '10px 16px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 14,
+              }}
+            >
+              <div
+                style={{
+                  flexShrink: 0,
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1.5px solid rgba(255,255,255,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" strokeWidth="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div
                   style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: '#92400E',
-                    background: '#FEF3C7',
-                    border: '1px solid #F59E0B',
-                    borderRadius: 4,
-                    padding: '2px 7px',
-                    letterSpacing: 0.5,
-                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    marginBottom: 5,
                   }}
                 >
-                  EM ANÁLISE
-                </span>
-                <span style={{ fontSize: 11, color: C.navy }}>
-                  Implementação do{' '}
-                  <strong>duplo fator de autenticação nativa do Cognito</strong>{' '}
-                  — controle de acessos integrado à plataforma, sem dependência
-                  de solução externa.
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#93C5FD',
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    Segurança da Informação · Autenticação e Controle de Acesso
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: '#92400E',
+                      background: '#FEF3C7',
+                      border: '1px solid #F59E0B',
+                      borderRadius: 4,
+                      padding: '2px 7px',
+                      letterSpacing: 0.5,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    EM ANÁLISE
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: 'rgba(255,255,255,0.85)',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  A arquitetura do New Front trata autenticação como{' '}
+                  <strong style={{ color: 'white' }}>primeiro cidadão</strong> —
+                  não como afterthought. Em análise:{' '}
+                  <strong style={{ color: 'white' }}>
+                    MFA nativo do Cognito
+                  </strong>{' '}
+                  com dois fatores de verificação integrados à plataforma,
+                  rastreabilidade completa de acessos e controle granular de
+                  permissões. Zero dependência de solução externa — segurança
+                  construída dentro da arquitetura.
                 </span>
               </div>
             </div>
-            <a
-              href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 2,
-                background: C.coral,
-                color: 'white',
-                borderRadius: 6,
-                padding: '8px 14px',
-                textDecoration: 'none',
-                fontSize: 11,
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
-              <span>Design</span>
-              <span style={{ fontSize: 15 }}>↗</span>
-            </a>
           </div>
         </Fade>
       </div>
