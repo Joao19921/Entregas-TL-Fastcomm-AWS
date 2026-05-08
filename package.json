@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node -e \"require('fs').copyFileSync('index.src.html','index.html')\"",
     "dev": "vite",
     "test": "vitest run",
     "prebuild": "node -e \"require('fs').copyFileSync('index.src.html','index.html')\"",

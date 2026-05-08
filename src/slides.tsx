@@ -217,7 +217,7 @@ function Slide01() {
               lineHeight: 1.05,
             }}
           >
-            FastComm 2.0
+            FastComm 1.6
           </h1>
         </Fade>
         <Fade delay={0.2}>
@@ -414,7 +414,7 @@ function Slide02() {
               }}
             >
               <div style={{ fontSize: 17, fontWeight: 700, color: C.navy }}>
-                Planejamento 2.0
+                Planejamento - evolução do produto
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, color: C.coral }}>
                 40%
@@ -434,7 +434,7 @@ function Slide02() {
           </div>
         </Fade>
       </div>
-      <SF text="FastComm 2.0 · Diagnóstico" />
+      <SF text="FastComm 1.6 · Diagnóstico" />
     </div>
   )
 }
@@ -447,7 +447,7 @@ function Slide03() {
     { label: 'Performance', value: 100 },
     { label: 'Arquitetura', value: 100 },
     { label: 'Mapeamento de Features', value: 60 },
-    { label: 'Planejamento 2.0', value: 40 },
+    { label: 'Planejamento - evolução do produto', value: 40 },
   ]
   return (
     <div
@@ -571,7 +571,7 @@ function Slide03() {
           </Fade>
         </div>
       </div>
-      <SF text="FastComm 2.0 · Diagnóstico" />
+      <SF text="FastComm 1.6 · Diagnóstico" />
     </div>
   )
 }
@@ -717,7 +717,7 @@ function Slide04() {
           ))}
         </div>
       </div>
-      <SF text="FastComm 2.0 · Diagnóstico" />
+      <SF text="FastComm 1.6 · Diagnóstico" />
     </div>
   )
 }
@@ -779,7 +779,7 @@ function Slide05() {
             ],
           },
           {
-            title: 'Planejamento 2.0',
+            title: 'Planejamento - evolução do produto',
             pct: '40% · 2 de 5',
             color: C.coral,
             lines: [
@@ -790,7 +790,7 @@ function Slide05() {
               },
               {
                 label: 'Em andamento:',
-                text: 'priorização das melhorias e definição da arquitetura alvo 2.0 (centralização de front, plataforma de IA, ajuda contextual).',
+                text: 'priorização das melhorias e definição da arquitetura alvo 1.6 (centralização de front, plataforma de IA, ajuda contextual).',
                 type: 'next',
               },
               {
@@ -871,7 +871,7 @@ function Slide05() {
           </Fade>
         ))}
       </div>
-      <SF text="FastComm 2.0 · Diagnóstico" />
+      <SF text="FastComm 1.6 · Diagnóstico" />
     </div>
   )
 }
@@ -935,7 +935,7 @@ function Slide06() {
               letterSpacing: -0.5,
             }}
           >
-            Direção proposta para a 2.0
+            Direção proposta para a 1.6
           </h1>
         </Fade>
         <Fade delay={0.05}>
@@ -1011,7 +1011,7 @@ function Slide06() {
           ))}
         </div>
       </div>
-      <SF text="FastComm 2.0 · Direção" />
+      <SF text="FastComm 1.6 · Direção" />
     </div>
   )
 }
@@ -1212,7 +1212,7 @@ function Slide07() {
           </Fade>
         </div>
       </div>
-      <SF text="FastComm 2.0 · Direção" />
+      <SF text="FastComm 1.6 · Direção" />
     </div>
   )
 }
@@ -1475,7 +1475,7 @@ function Slide09() {
           </div>
         </Fade>
       </div>
-      <SF text="FastComm 2.0 · Arquitetura" />
+      <SF text="FastComm 1.6 · Arquitetura" />
     </div>
   )
 }
@@ -1490,7 +1490,7 @@ function Slide10() {
     },
     {
       title: 'Shadow mode primeiro',
-      text: 'Mesmo input rodando em paralelo na 1.5 e na 2.0. Compara saída antes do cutover.',
+      text: 'Mesmo input rodando em paralelo na 1.5 e na 1.6. Compara saída antes do cutover.',
       color: C.teal,
     },
     {
@@ -1502,11 +1502,11 @@ function Slide10() {
   const steps = [
     'Consolida Postgres em ambiente novo (vazio)',
     'Sobe ambiente multi-tenant em paralelo ao 1.5',
-    'Migra primeiro fluxo do Cassems pra 2.0',
+    'Migra primeiro fluxo do Cassems pra 1.6',
     'Shadow mode — compara saídas em paralelo',
     'Cutover do fluxo 1 e estabiliza',
     'Repete para os próximos fluxos',
-    'Cassems 100% na 2.0 — desliga 1.5',
+    'Cassems 100% na 1.6 — desliga 1.5',
     'Onboarding do cliente 2 no ambiente maduro',
   ]
   return (
@@ -1695,7 +1695,7 @@ function Slide10() {
           </div>
         </Fade>
       </div>
-      <SF text="FastComm 2.0 · Implementação" />
+      <SF text="FastComm 1.6 · Implementação" />
     </div>
   )
 }
@@ -1874,7 +1874,7 @@ function Slide11() {
           </Fade>
         </div>
       </div>
-      <SF text="FastComm 2.0 · Arquitetura" />
+      <SF text="FastComm 1.6 · Arquitetura" />
     </div>
   )
 }
@@ -2065,12 +2065,12 @@ function Slide12() {
             </span>
             As fases 1 e 2 podem rodar em paralelo às frentes de produto que
             ainda estão em andamento (Mapeamento de Features e Planejamento
-            2.0). O bloqueio dessas frentes não impede o início do trabalho
+            1.6). O bloqueio dessas frentes não impede o início do trabalho
             técnico de plataforma de IA.
           </div>
         </Fade>
       </div>
-      <SF text="FastComm 2.0 · Direção" />
+      <SF text="FastComm 1.6 · Direção" />
     </div>
   )
 }
@@ -2197,7 +2197,7 @@ function Slide13() {
           ))}
         </div>
       </div>
-      <SF text="FastComm 2.0 · Decisões" dark />
+      <SF text="FastComm 1.6 · Decisões" dark />
     </div>
   )
 }
