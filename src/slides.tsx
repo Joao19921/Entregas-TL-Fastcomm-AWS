@@ -1378,9 +1378,11 @@ function Slide09() {
                     <path d="M0,0 L10,5 L0,10 z" fill="#5F5E5A" />
                   </marker>
                 </defs>
-                <rect x={10} y={95} width={120} height={52} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">New Front</text>
-                <text x={70} y={136} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">Centralizado</text>
+                <a href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1" target="_blank" rel="noopener noreferrer">
+                  <rect x={10} y={95} width={120} height={52} rx={5} fill="white" stroke="#E85A2C" strokeWidth={2} />
+                  <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">New Front</text>
+                  <text x={70} y={136} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#E85A2C" fontWeight={600}>Figma ↗</text>
+                </a>
                 <rect x={170} y={10} width={130} height={220} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
                 <text x={235} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">API Gateway</text>
                 <text x={235} y={55} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">NGINX</text>
@@ -1420,17 +1422,57 @@ function Slide09() {
           </Fade>
         </div>
         <Fade delay={0.35}>
-          <p
+          <div
             style={{
               marginTop: 8,
-              fontSize: 11,
-              color: C.textMuted,
-              fontStyle: 'italic',
+              background: 'linear-gradient(135deg, #F4F6FB 0%, #FFF3EF 100%)',
+              border: `1.5px solid ${C.coral}`,
+              borderRadius: 8,
+              padding: '10px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
             }}
           >
-            Camada nova em vermelho · núcleo pós-1.5 segue intocado · Postgres e
-            ClickHouse já existentes alimentam a IA via Gateway
-          </p>
+            <div style={{ flex: 1 }}>
+              <span
+                style={{ fontSize: 11, fontWeight: 700, color: C.coral }}
+              >
+                New Front ·{' '}
+              </span>
+              <span style={{ fontSize: 11, color: C.navy, lineHeight: 1.6 }}>
+                Não nasceu <em>depois</em> da nova arquitetura — nasceu{' '}
+                <em>junto</em>. Projetado para um back-end com banco único e
+                zero fragmentação de contexto, cada cliente tombado do legado
+                não apenas migra: ele confirma em tempo real que a direção está
+                certa. Ainda não é a versão final — mas é, sem dúvida, a melhor
+                versão que o FastComm já teve.
+              </span>
+            </div>
+            <a
+              href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                background: C.coral,
+                color: 'white',
+                borderRadius: 6,
+                padding: '8px 14px',
+                textDecoration: 'none',
+                fontSize: 11,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              <span>Design</span>
+              <span style={{ fontSize: 15 }}>↗</span>
+            </a>
+          </div>
         </Fade>
       </div>
       <SF text="FastComm 2.0 · Arquitetura" />
