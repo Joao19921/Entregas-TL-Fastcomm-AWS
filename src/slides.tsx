@@ -1402,7 +1402,7 @@ function Slide10() {
       num: 4,
       label: 'Consolidação',
       duration: 'Marco final',
-      items: ['Cassems 100% na 1.6', 'Desligamento do 1.5', 'Onboarding do Cliente 2'],
+      items: ['Cassems 100% na 1.6', 'Onboarding do Cliente 2'],
       gate: null,
       color: '#EF9F27',
       active: false,
