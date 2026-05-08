@@ -1366,18 +1366,21 @@ function Slide09() {
                 style={{ width: '100%', height: 'auto' }}
               >
                 <defs>
-                  <marker
-                    id="ah9"
-                    viewBox="0 0 10 10"
-                    refX={9}
-                    refY={5}
-                    markerWidth={7}
-                    markerHeight={7}
-                    orient="auto"
-                  >
+                  <marker id="ah9" viewBox="0 0 10 10" refX={9} refY={5} markerWidth={7} markerHeight={7} orient="auto">
                     <path d="M0,0 L10,5 L0,10 z" fill="#5F5E5A" />
                   </marker>
                 </defs>
+                <line x1={130} y1={121} x2={168} y2={121} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={300} y1={32} x2={343} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={300} y1={92} x2={343} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={300} y1={152} x2={343} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={300} y1={210} x2={343} y2={210} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={495} y1={152} x2={538} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={495} y1={32} x2={728} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={495} y1={92} x2={728} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={680} y1={152} x2={728} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={495} y1={210} x2={728} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+                <line x1={820} y1={174} x2={820} y2={190} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
                 <a href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1" target="_blank" rel="noopener noreferrer">
                   <rect x={10} y={95} width={120} height={52} rx={5} fill="white" stroke="#E85A2C" strokeWidth={2} />
                   <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">New Front</text>
@@ -1398,25 +1401,13 @@ function Slide09() {
                 <text x={420} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Log</text>
                 <rect x={540} y={130} width={140} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
                 <text x={610} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Executor</text>
-                <rect x={730} y={10} width={180} height={62} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-                <text x={820} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Postgres</text>
-                <text x={820} y={56} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">schemas engine · core</text>
-                <rect x={730} y={110} width={180} height={44} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-                <text x={820} y={138} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">ClickHouse</text>
+                <rect x={730} y={10} width={180} height={104} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
+                <text x={820} y={46} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Postgres</text>
+                <text x={820} y={64} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">schemas engine · core</text>
+                <rect x={730} y={130} width={180} height={44} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
+                <text x={820} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">ClickHouse</text>
                 <rect x={730} y={190} width={180} height={40} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
                 <text x={820} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Grafana</text>
-                <line x1={130} y1={121} x2={168} y2={121} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={32} x2={343} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={92} x2={343} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={152} x2={343} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={210} x2={343} y2={210} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={152} x2={538} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={610} y1={130} x2={495} y2={110} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={32} x2={728} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={92} x2={728} y2={50} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={680} y1={162} x2={728} y2={132} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={210} x2={728} y2={138} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={820} y1={154} x2={820} y2={188} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
               </svg>
             </div>
           </Fade>
@@ -1434,20 +1425,45 @@ function Slide09() {
               gap: 16,
             }}
           >
-            <div style={{ flex: 1 }}>
-              <span
-                style={{ fontSize: 11, fontWeight: 700, color: C.coral }}
-              >
-                New Front ·{' '}
-              </span>
-              <span style={{ fontSize: 11, color: C.navy, lineHeight: 1.6 }}>
-                Não nasceu <em>depois</em> da nova arquitetura — nasceu{' '}
-                <em>junto</em>. Projetado para um back-end com banco único e
-                zero fragmentação de contexto, cada cliente tombado do legado
-                não apenas migra: ele confirma em tempo real que a direção está
-                certa. Ainda não é a versão final — mas é, sem dúvida, a melhor
-                versão que o FastComm já teve.
-              </span>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div>
+                <span
+                  style={{ fontSize: 11, fontWeight: 700, color: C.coral }}
+                >
+                  New Front ·{' '}
+                </span>
+                <span style={{ fontSize: 11, color: C.navy, lineHeight: 1.6 }}>
+                  Não nasceu <em>depois</em> da nova arquitetura — nasceu{' '}
+                  <em>junto</em>. Projetado para um back-end com banco único e
+                  zero fragmentação de contexto, cada cliente tombado do legado
+                  não apenas migra: ele confirma em tempo real que a direção
+                  está certa. Ainda não é a versão final — mas é, sem dúvida, a
+                  melhor versão que o FastComm já teve.
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: '#92400E',
+                    background: '#FEF3C7',
+                    border: '1px solid #F59E0B',
+                    borderRadius: 4,
+                    padding: '2px 7px',
+                    letterSpacing: 0.5,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  EM ANÁLISE
+                </span>
+                <span style={{ fontSize: 11, color: C.navy }}>
+                  Implementação do{' '}
+                  <strong>duplo fator de autenticação nativa do Cognito</strong>{' '}
+                  — controle de acessos integrado à plataforma, sem dependência
+                  de solução externa.
+                </span>
+              </div>
             </div>
             <a
               href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1"
