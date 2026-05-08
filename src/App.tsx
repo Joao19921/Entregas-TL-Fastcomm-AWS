@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Maximize2, Minimize2, Grid, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Maximize2, Minimize2, Grid, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react'
 import { slides } from './slides'
 
 const SLIDE_W = 1330
@@ -58,6 +58,7 @@ export default function App() {
   const [current, setCurrent] = useState(0)
   const [direction, setDirection] = useState(1)
   const [showOverview, setShowOverview] = useState(false)
+  const [dark, setDark] = useState(false)
   const total = slides.length
 
   const go = useCallback(
@@ -103,7 +104,7 @@ export default function App() {
   if (mode === 'present') {
     const CurrentSlide = slides[current].component
     return (
-      <div className="fixed inset-0 bg-[#141418] flex flex-col select-none">
+      <div className="fixed inset-0 z-50 bg-[#141418] flex flex-col select-none" data-theme={dark ? 'dark' : undefined}>
         {/* Top bar */}
         <div className="flex items-center justify-between px-5 py-2 border-b border-white/5 shrink-0">
           <span className="text-white/50 text-xs font-medium truncate max-w-xs">
@@ -111,6 +112,15 @@ export default function App() {
           </span>
           <div className="flex items-center gap-4">
             <button
+              type="button"
+              onClick={() => setDark(d => !d)}
+              className="text-white/40 hover:text-white/80 transition-colors"
+              title={dark ? 'Modo claro' : 'Modo escuro'}
+            >
+              {dark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+            <button
+              type="button"
               onClick={() => setShowOverview(o => !o)}
               className="text-white/40 hover:text-white/80 transition-colors"
               title="Visão geral (G)"
@@ -121,6 +131,7 @@ export default function App() {
               {current + 1} / {total}
             </span>
             <button
+              type="button"
               onClick={() => setMode('scroll')}
               className="text-white/40 hover:text-white/80 transition-colors"
               title="Sair da apresentação (Esc)"
@@ -246,20 +257,32 @@ export default function App() {
 
   // ── Scroll mode ──
   return (
-    <div className="min-h-screen bg-[#2A2A2E]">
+    <div className="min-h-screen bg-[#2A2A2E]" data-theme={dark ? 'dark' : undefined}>
       {/* Sticky toolbar */}
       <div className="sticky top-0 z-40 flex items-center justify-between px-5 py-2.5 bg-[#141418]/80 backdrop-blur-md border-b border-white/5">
-        <span className="text-white/70 text-sm font-semibold tracking-tight">FastComm 2.0</span>
-        <button
-          onClick={() => setMode('present')}
-          className="flex items-center gap-2 text-xs text-white/50 hover:text-white/90 transition-colors group"
-        >
-          <Maximize2 size={13} />
-          <span>Apresentar</span>
-          <kbd className="hidden md:inline text-[10px] border border-white/20 px-1.5 py-0.5 rounded font-mono text-white/30 group-hover:border-white/40 transition-colors">
-            P
-          </kbd>
-        </button>
+        <span className="text-white/70 text-sm font-semibold tracking-tight">FastComm 1.6</span>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setDark(d => !d)}
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/80 transition-colors"
+            title={dark ? 'Modo claro' : 'Modo escuro'}
+          >
+            {dark ? <Sun size={13} /> : <Moon size={13} />}
+            <span className="hidden md:inline">{dark ? 'Claro' : 'Escuro'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('present')}
+            className="flex items-center gap-2 text-xs text-white/50 hover:text-white/90 transition-colors group"
+          >
+            <Maximize2 size={13} />
+            <span>Apresentar</span>
+            <kbd className="hidden md:inline text-[10px] border border-white/20 px-1.5 py-0.5 rounded font-mono text-white/30 group-hover:border-white/40 transition-colors">
+              P
+            </kbd>
+          </button>
+        </div>
       </div>
 
       {/* Slides column */}

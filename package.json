@@ -9,6 +9,7 @@
     "test": "vitest run",
     "prebuild": "node -e \"require('fs').copyFileSync('index.src.html','index.html')\"",
     "build": "tsc -b && vite build",
+    "postbuild": "node -e \"require('fs').copyFileSync('index.src.html','index.html')\"",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,22 +1,23 @@
 import { useRef, useEffect, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 
-// ─── Brand tokens ────────────────────────────────────────────
+// ─── Brand tokens (CSS custom properties — respond to [data-theme="dark"]) ───
 const C = {
-  navy: '#0E1E3A',
-  navySoft: '#1A2B4A',
-  ice: '#E8EEF7',
-  iceSoft: '#F8F9FB',
-  sky: '#85B7EB',
-  skyLight: '#B5D4F4',
-  teal: '#1D9E75',
-  amber: '#EF9F27',
-  coral: '#D85A30',
-  coralSoft: '#FEF1ED',
-  text: '#1F2328',
-  textMuted: '#5F5E5A',
-  textTertiary: '#888780',
-  white: '#FFFFFF',
+  navy: 'var(--c-navy)',
+  navySoft: 'var(--c-navy-soft)',
+  ice: 'var(--c-ice)',
+  iceSoft: 'var(--c-ice-soft)',
+  brand: 'var(--c-brand)',
+  sky: 'var(--c-sky)',
+  skyLight: 'var(--c-sky-light)',
+  teal: 'var(--c-teal)',
+  amber: 'var(--c-amber)',
+  coral: 'var(--c-coral)',
+  coralSoft: 'var(--c-coral-soft)',
+  text: 'var(--c-text)',
+  textMuted: 'var(--c-text-muted)',
+  textTertiary: 'var(--c-text-tertiary)',
+  white: 'var(--c-white)',
 }
 
 // ─── Shared helpers ───────────────────────────────────────────
@@ -1219,561 +1220,313 @@ function Slide07() {
 
 // ─── SLIDE 08: Target Architecture 1.6 ───────────────────────
 function Slide09() {
+  const SVG_H = 290
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: C.white,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={{ width: '100%', height: '100%', background: C.white, position: 'relative', overflow: 'hidden', padding: '24px 48px', boxSizing: 'border-box', fontFamily: 'inherit' }}>
       <SN n={8} />
-      <div style={body}>
-        <Fade>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 36,
-              fontWeight: 700,
-              color: C.navy,
-              letterSpacing: -0.5,
-            }}
-          >
-            Arquitetura alvo 1.6
-          </h1>
-        </Fade>
-        <Fade delay={0.05}>
-          <p style={{ margin: '8px 0 0', fontSize: 16, color: C.textMuted }}>
-            Evolução incremental sobre o núcleo existente — sem reescrever
-            o que já funciona
-          </p>
-        </Fade>
 
-        <div
-          style={{
-            marginTop: 18,
-            flex: 1,
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          {/* AI layer */}
-          <Fade delay={0.1}>
-            <div>
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: C.coral,
-                  letterSpacing: 3,
-                  marginBottom: 6,
-                }}
-              >
-                CAMADA NOVA — IA
+      {/* Título */}
+      <Fade>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: C.navy, letterSpacing: -0.5, lineHeight: 1.1 }}>
+          Arquitetura alvo 1.6
+        </h1>
+      </Fade>
+      <Fade delay={0.04}>
+        <p style={{ margin: '4px 0 10px', fontSize: 13, color: C.textMuted }}>
+          Evolução incremental — sem reescrever o que já funciona
+        </p>
+      </Fade>
+
+      {/* AI layer */}
+      <Fade delay={0.08}>
+        <div style={{ marginBottom: 6 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.coral, letterSpacing: 3, marginBottom: 5 }}>CAMADA NOVA — IA</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1.8fr 1fr 1fr', gap: 6 }}>
+            {[
+              { title: 'Chatbot da Ajuda', sub: 'Botão no artigo' },
+              { title: 'Insight do Dashboard', sub: 'Renderiza ao carregar' },
+              { title: 'LLM Gateway', sub: 'PII redaction · audit · cache' },
+              { title: 'Vector Store', sub: 'Manual indexado' },
+              { title: 'Anthropic API', sub: 'Claude Sonnet' },
+            ].map(box => (
+              <div key={box.title} style={{ background: C.white, border: `2px solid ${C.coral}`, borderRadius: 5, padding: '5px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.navy }}>{box.title}</div>
+                <div style={{ fontSize: 9, color: C.textMuted, marginTop: 2 }}>{box.sub}</div>
               </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.4fr 1.4fr 1.8fr 1fr 1fr',
-                  gap: 10,
-                }}
-              >
-                {[
-                  { title: 'Chatbot da Ajuda', sub: 'Botão no artigo' },
-                  { title: 'Insight do Dashboard', sub: 'Renderiza ao carregar' },
-                  { title: 'LLM Gateway', sub: 'PII redaction · audit · cache' },
-                  { title: 'Vector Store', sub: 'Manual indexado' },
-                  { title: 'Anthropic API', sub: 'Claude Sonnet' },
-                ].map(box => (
-                  <div
-                    key={box.title}
-                    style={{
-                      background: C.white,
-                      border: `2px solid ${C.coral}`,
-                      borderRadius: 6,
-                      padding: '10px 12px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: C.navy,
-                      }}
-                    >
-                      {box.title}
-                    </div>
-                    <div style={{ fontSize: 10, color: C.textMuted }}>
-                      {box.sub}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            ))}
+          </div>
+        </div>
+      </Fade>
+
+      {/* Banner */}
+      <Fade delay={0.14}>
+        <div style={{ background: C.coralSoft, borderRadius: 5, padding: '5px 12px', fontSize: 11, color: '#8C3A1F', fontStyle: 'italic', marginBottom: 6 }}>
+          <strong style={{ color: C.coral }}>Gateway:</strong>{' '}
+          Chatbot → Postgres · Insight → ClickHouse · Tudo via tool use auditado.
+        </div>
+      </Fade>
+
+      {/* SVG — altura fixa */}
+      <Fade delay={0.2}>
+        <div style={{ background: C.iceSoft, borderRadius: 7, padding: '8px 12px', height: SVG_H, marginBottom: 8, overflow: 'hidden' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, letterSpacing: 3, marginBottom: 6 }}>NÚCLEO PÓS-1.5 · retrocompatível</div>
+          <svg viewBox="0 0 1180 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            <defs>
+              <marker id="ah9" viewBox="0 0 10 10" refX={9} refY={5} markerWidth={7} markerHeight={7} orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#5F5E5A" />
+              </marker>
+            </defs>
+            <line x1={130} y1={121} x2={168} y2={121} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={300} y1={32} x2={343} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={300} y1={92} x2={343} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={300} y1={152} x2={343} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={300} y1={210} x2={343} y2={210} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={495} y1={152} x2={538} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={495} y1={32} x2={728} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={495} y1={92} x2={728} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={680} y1={152} x2={728} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={495} y1={210} x2={728} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <line x1={820} y1={174} x2={820} y2={190} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
+            <a href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1" target="_blank" rel="noopener noreferrer">
+              <rect x={10} y={95} width={120} height={52} rx={5} fill="white" stroke="#E85A2C" strokeWidth={2} />
+              <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">New Front</text>
+              <text x={70} y={136} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#E85A2C" fontWeight={600}>Figma ↗</text>
+            </a>
+            <rect x={170} y={10} width={130} height={220} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
+            <text x={235} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">API Gateway</text>
+            <text x={235} y={55} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">NGINX</text>
+            <text x={235} y={88} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={9} fill="#1F2328">Controle de acesso</text>
+            <text x={235} y={103} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={9} fill="#1F2328">Controle de comportamento</text>
+            <rect x={345} y={10} width={150} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
+            <text x={420} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Core</text>
+            <rect x={345} y={70} width={150} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
+            <text x={420} y={98} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Engine</text>
+            <rect x={345} y={130} width={150} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
+            <text x={420} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Orquestrador</text>
+            <rect x={345} y={190} width={150} height={40} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
+            <text x={420} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Log</text>
+            <rect x={540} y={130} width={140} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
+            <text x={610} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Executor</text>
+            <rect x={730} y={10} width={180} height={104} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
+            <text x={820} y={46} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Postgres</text>
+            <text x={820} y={64} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">schemas engine · core</text>
+            <rect x={730} y={130} width={180} height={44} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
+            <text x={820} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">ClickHouse</text>
+            <rect x={730} y={190} width={180} height={40} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
+            <text x={820} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Grafana</text>
+          </svg>
+        </div>
+      </Fade>
+
+      {/* Callout New Front + Segurança */}
+      <Fade delay={0.3}>
+        <div style={{ border: `1.5px solid ${C.coral}`, borderRadius: 7, overflow: 'hidden' }}>
+          <div style={{ background: 'linear-gradient(135deg, #F4F6FB 0%, #FFF3EF 100%)', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.coral }}>New Front · </span>
+              <span style={{ fontSize: 11, color: C.navy }}>
+                Nasceu <em>junto</em> à nova arquitetura — banco único, zero fragmentação de contexto. Cada cliente migrado confirma em tempo real que a direção está certa.{' '}
+                <em>A melhor versão que o FastComm já teve.</em>
+              </span>
             </div>
-          </Fade>
-
-          {/* Banner */}
-          <Fade delay={0.2}>
-            <div
-              style={{
-                background: C.coralSoft,
-                borderRadius: 6,
-                padding: '8px 14px',
-                fontSize: 12,
-                color: '#8C3A1F',
-                fontStyle: 'italic',
-              }}
-            >
-              <strong style={{ color: C.coral }}>
-                Leitura de dados pelo Gateway:
-              </strong>{' '}
-              Chatbot consulta Postgres (mapeamentos do usuário) · Insight
-              consulta ClickHouse (top pipelines, erros) · Tudo via tool use
-              auditado.
-            </div>
-          </Fade>
-
-          {/* Core nucleus SVG */}
-          <Fade delay={0.25} style={{ flex: 1 }}>
-            <div
-              style={{
-                background: C.iceSoft,
-                borderRadius: 8,
-                padding: '14px 16px',
-                height: '100%',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: C.textMuted,
-                  letterSpacing: 3,
-                  marginBottom: 10,
-                }}
-              >
-                NÚCLEO PÓS-1.5 · retrocompatível
-              </div>
-              <svg
-                viewBox="0 0 1180 240"
-                xmlns="http://www.w3.org/2000/svg"
-                preserveAspectRatio="xMidYMid meet"
-                style={{ width: '100%', height: 'auto' }}
-              >
-                <defs>
-                  <marker id="ah9" viewBox="0 0 10 10" refX={9} refY={5} markerWidth={7} markerHeight={7} orient="auto">
-                    <path d="M0,0 L10,5 L0,10 z" fill="#5F5E5A" />
-                  </marker>
-                </defs>
-                <line x1={130} y1={121} x2={168} y2={121} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={32} x2={343} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={92} x2={343} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={152} x2={343} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={300} y1={210} x2={343} y2={210} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={152} x2={538} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={32} x2={728} y2={32} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={92} x2={728} y2={92} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={680} y1={152} x2={728} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={495} y1={210} x2={728} y2={152} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <line x1={820} y1={174} x2={820} y2={190} stroke="#5F5E5A" strokeWidth={1.5} markerEnd="url(#ah9)" />
-                <a href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1" target="_blank" rel="noopener noreferrer">
-                  <rect x={10} y={95} width={120} height={52} rx={5} fill="white" stroke="#E85A2C" strokeWidth={2} />
-                  <text x={70} y={118} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">New Front</text>
-                  <text x={70} y={136} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#E85A2C" fontWeight={600}>Figma ↗</text>
-                </a>
-                <rect x={170} y={10} width={130} height={220} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-                <text x={235} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">API Gateway</text>
-                <text x={235} y={55} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">NGINX</text>
-                <text x={235} y={88} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={9} fill="#1F2328">Controle de acesso</text>
-                <text x={235} y={103} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={9} fill="#1F2328">Controle de comportamento</text>
-                <rect x={345} y={10} width={150} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={420} y={38} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Core</text>
-                <rect x={345} y={70} width={150} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={420} y={98} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Engine</text>
-                <rect x={345} y={130} width={150} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={420} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Orquestrador</text>
-                <rect x={345} y={190} width={150} height={40} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={420} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Log</text>
-                <rect x={540} y={130} width={140} height={44} rx={5} fill="white" stroke="#85B7EB" strokeWidth={2} />
-                <text x={610} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Executor</text>
-                <rect x={730} y={10} width={180} height={104} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-                <text x={820} y={46} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Postgres</text>
-                <text x={820} y={64} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={10} fill="#5F5E5A">schemas engine · core</text>
-                <rect x={730} y={130} width={180} height={44} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-                <text x={820} y={158} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">ClickHouse</text>
-                <rect x={730} y={190} width={180} height={40} rx={5} fill="white" stroke="#1A2B4A" strokeWidth={1.5} />
-                <text x={820} y={215} textAnchor="middle" fontFamily="Inter,sans-serif" fontSize={12} fontWeight={700} fill="#0E1E3A">Grafana</text>
+            <a href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1" target="_blank" rel="noopener noreferrer"
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, background: C.coral, color: 'white', borderRadius: 5, padding: '6px 12px', textDecoration: 'none', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+              <span>Design</span><span style={{ fontSize: 14 }}>↗</span>
+            </a>
+          </div>
+          <div style={{ background: C.navy, padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" strokeWidth="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="white" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-          </Fade>
-        </div>
-        <Fade delay={0.35}>
-          <div
-            style={{
-              marginTop: 8,
-              border: `1.5px solid ${C.coral}`,
-              borderRadius: 8,
-              overflow: 'hidden',
-            }}
-          >
-            {/* New Front — description + Figma link */}
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #F4F6FB 0%, #FFF3EF 100%)',
-                padding: '10px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: C.coral }}>
-                  New Front ·{' '}
-                </span>
-                <span style={{ fontSize: 11, color: C.navy, lineHeight: 1.6 }}>
-                  Não nasceu <em>depois</em> da nova arquitetura — nasceu{' '}
-                  <em>junto</em>. Projetado para um back-end com banco único e
-                  zero fragmentação de contexto, cada cliente tombado do legado
-                  não apenas migra: ele confirma em tempo real que a direção
-                  está certa. Ainda não é a versão final — mas é, sem dúvida, a
-                  melhor versão que o FastComm já teve.
-                </span>
-              </div>
-              <a
-                href="https://www.figma.com/board/jkv0uugzmm6MinWcnE80wb/IA-Fastcomm-New-Front?node-id=0-1&t=HsQwJzQn8i26vVjb-1"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 2,
-                  background: C.coral,
-                  color: 'white',
-                  borderRadius: 6,
-                  padding: '8px 14px',
-                  textDecoration: 'none',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              >
-                <span>Design</span>
-                <span style={{ fontSize: 15 }}>↗</span>
-              </a>
-            </div>
-            {/* Security emphasis section */}
-            <div
-              style={{
-                background: C.navy,
-                padding: '10px 16px',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 14,
-              }}
-            >
-              <div
-                style={{
-                  flexShrink: 0,
-                  width: 34,
-                  height: 34,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '1.5px solid rgba(255,255,255,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" strokeWidth="2" />
-                  <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    marginBottom: 5,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: '#93C5FD',
-                      letterSpacing: 0.3,
-                    }}
-                  >
-                    Segurança da Informação · Autenticação e Controle de Acesso
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      color: '#92400E',
-                      background: '#FEF3C7',
-                      border: '1px solid #F59E0B',
-                      borderRadius: 4,
-                      padding: '2px 7px',
-                      letterSpacing: 0.5,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    EM ANÁLISE
-                  </span>
-                </div>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: 'rgba(255,255,255,0.85)',
-                    lineHeight: 1.6,
-                  }}
-                >
-                  A arquitetura do New Front trata autenticação como{' '}
-                  <strong style={{ color: 'white' }}>primeiro cidadão</strong> —
-                  não como afterthought. Em análise:{' '}
-                  <strong style={{ color: 'white' }}>
-                    MFA nativo do Cognito
-                  </strong>{' '}
-                  com dois fatores de verificação integrados à plataforma,
-                  rastreabilidade completa de acessos e controle granular de
-                  permissões. Zero dependência de solução externa — segurança
-                  construída dentro da arquitetura.
-                </span>
-              </div>
-            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#93C5FD', flexShrink: 0 }}>Segurança · Autenticação e Acesso</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#92400E', background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>EM ANÁLISE</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.80)', flex: 1 }}>MFA nativo do Cognito · rastreabilidade completa · controle granular · zero dependência externa.</span>
           </div>
-        </Fade>
-      </div>
-      <SF text="FastComm 1.6 · Arquitetura" />
+        </div>
+      </Fade>
     </div>
   )
 }
 
 // ─── SLIDE 10: Implementation Strategy ───────────────────────
 function Slide10() {
-  const principles = [
+  const pillars = [
     {
-      title: 'Strangler fig',
-      text: 'Migra fluxo a fluxo, não cliente inteiro. Reverte um fluxo, não a migração toda.',
-      color: C.sky,
+      title: 'Adoção por Ondas',
+      text: 'Nunca o cliente inteiro de uma vez. 4–5 pipelines por ciclo, ~10 dias de operação validada antes de expandir.',
+      color: '#378ADD',
     },
     {
-      title: 'Shadow mode primeiro',
-      text: 'Mesmo input rodando em paralelo na 1.5 e na 1.6. Compara saída antes do cutover.',
-      color: C.teal,
+      title: 'Validação em Produção',
+      text: 'Shadow mode paralelo até o cutover. Outputs comparados em tempo real. Reversão em minutos via feature flag.',
+      color: '#1D9E75',
     },
     {
-      title: 'Valor a cada entrega',
-      text: 'Cliente vê benefício a cada fluxo migrado. Migração vira sequência de wins.',
-      color: C.amber,
+      title: 'Valor Contínuo',
+      text: 'Cada onda entrega benefício mensurável. Cassems vê ROI antes da migração completa.',
+      color: '#EF9F27',
     },
   ]
-  const steps = [
-    'Consolida Postgres em ambiente novo (vazio)',
-    'Sobe ambiente multi-tenant em paralelo ao 1.5',
-    'Migra primeiro fluxo do Cassems pra 1.6',
-    'Shadow mode — compara saídas em paralelo',
-    'Cutover do fluxo 1 e estabiliza',
-    'Repete para os próximos fluxos',
-    'Cassems 100% na 1.6 — desliga 1.5',
-    'Onboarding do cliente 2 no ambiente maduro',
+  const phases = [
+    {
+      num: 1,
+      label: 'Preparação',
+      duration: '2–3 dias',
+      items: ['Ambiente paralelo isolado', 'Configuração multi-tenant', 'Base de dados zerada'],
+      gate: 'Ambiente validado',
+      color: '#85B7EB',
+      active: false,
+    },
+    {
+      num: 2,
+      label: 'Onda 1',
+      duration: '≈10 dias',
+      items: ['4–5 pipelines selecionados', 'Shadow mode ativo', 'Go/no-go por fluxo'],
+      gate: 'Onda 1 estável · SLAs OK',
+      color: '#378ADD',
+      active: true,
+    },
+    {
+      num: 3,
+      label: 'Expansão Gradual',
+      duration: '≈30 dias',
+      items: ['Ciclos: validar → estabilizar → expandir', 'Fluxos restantes do Cassems', 'Monitoramento contínuo'],
+      gate: '100% Cassems migrado',
+      color: '#1D9E75',
+      active: false,
+    },
+    {
+      num: 4,
+      label: 'Consolidação',
+      duration: 'Marco final',
+      items: ['Cassems 100% na 1.6', 'Desligamento do 1.5', 'Onboarding do Cliente 2'],
+      gate: null,
+      color: '#EF9F27',
+      active: false,
+    },
   ]
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: C.white,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={{
+      width: '100%', height: '100%', background: C.white, position: 'relative',
+      overflow: 'hidden', padding: '24px 48px', boxSizing: 'border-box', fontFamily: 'inherit',
+    }}>
       <SN n={9} />
-      <div style={body}>
-        <Fade>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 36,
-              fontWeight: 700,
-              color: C.navy,
-              letterSpacing: -0.5,
-            }}
-          >
-            Estratégia de implementação
-          </h1>
-        </Fade>
-        <Fade delay={0.05}>
-          <p style={{ margin: '8px 0 0', fontSize: 16, color: C.textMuted }}>
-            Piloto Cassems como Design Partner — migração fluxo a fluxo, risco
-            distribuído no tempo
-          </p>
-        </Fade>
 
-        <Fade
-          delay={0.1}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 14,
-            marginTop: 18,
-          }}
-        >
-          {principles.map(p => (
-            <div
-              key={p.title}
-              style={{
-                background: C.ice,
-                borderRadius: 8,
-                borderLeft: `4px solid ${p.color}`,
-                padding: '14px 18px',
-              }}
-            >
-              <h4
-                style={{
-                  margin: '0 0 6px',
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: C.navy,
-                }}
-              >
-                {p.title}
-              </h4>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: C.text,
-                  lineHeight: 1.5,
-                }}
-              >
-                {p.text}
-              </p>
+      <Fade>
+        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: C.navy, letterSpacing: -0.5, lineHeight: 1.1 }}>
+          Implementação Controlada por Ondas
+        </h1>
+      </Fade>
+      <Fade delay={0.05}>
+        <p style={{ margin: '6px 0 0', fontSize: 14, color: C.textMuted, lineHeight: 1.4 }}>
+          Cassems como Design Partner estratégico — cada ciclo valida, estabiliza e expande antes do próximo avanço
+        </p>
+      </Fade>
+
+      <Fade delay={0.1} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 16 }}>
+        {pillars.map(p => (
+          <div key={p.title} style={{
+            background: C.iceSoft, borderRadius: 8, borderTop: `3px solid ${p.color}`,
+            padding: '12px 16px',
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.navy, marginBottom: 5 }}>{p.title}</div>
+            <div style={{ fontSize: 11.5, color: C.text, lineHeight: 1.5 }}>{p.text}</div>
+          </div>
+        ))}
+      </Fade>
+
+      <Fade delay={0.15}>
+        <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: C.textTertiary, textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const }}>
+            Rollout Progressivo
+          </span>
+          <div style={{ flex: 1, height: 1, background: C.ice }} />
+          <span style={{ fontSize: 10, color: C.textTertiary, fontStyle: 'italic', whiteSpace: 'nowrap' as const }}>Design Partner: Cassems</span>
+        </div>
+      </Fade>
+
+      <Fade delay={0.2} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 12, position: 'relative' as const }}>
+        <div style={{
+          position: 'absolute', top: 22, left: '12.5%', right: '12.5%', height: 2,
+          background: 'linear-gradient(to right, #85B7EB, #378ADD, #1D9E75, #EF9F27)',
+          zIndex: 0,
+        }} />
+        {phases.map((ph, i) => (
+          <div key={ph.num} style={{ padding: '0 4px', position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', marginBottom: 8 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: '50%',
+                background: ph.active ? ph.color : C.white,
+                border: `3px solid ${ph.color}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: 16,
+                color: ph.active ? '#ffffff' : ph.color,
+                boxShadow: ph.active ? `0 0 0 5px ${ph.color}25` : 'none',
+              }}>
+                {ph.num}
+              </div>
             </div>
-          ))}
-        </Fade>
-
-        <Fade delay={0.2}>
-          <h3
-            style={{
-              margin: '22px 0 0',
-              fontSize: 17,
-              fontWeight: 700,
-              color: C.navy,
-            }}
-          >
-            Sequência de implementação
-          </h3>
-        </Fade>
-
-        <Fade delay={0.25}>
-          <div
-            style={{
-              marginTop: 16,
-              position: 'relative',
-              paddingTop: 18,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 30,
-                left: '4%',
-                right: '4%',
-                height: 2,
-                background: C.ice,
-              }}
-            />
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(8, 1fr)',
-                gap: 6,
-                position: 'relative',
-              }}
-            >
-              {steps.map((step, i) => (
-                <div
-                  key={i}
-                  style={{ textAlign: 'center', padding: '0 4px' }}
-                >
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      background: C.sky,
-                      color: C.white,
-                      fontWeight: 700,
-                      fontSize: 13,
-                      margin: '0 auto 8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 10.5,
-                      color: C.text,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {step}
-                  </div>
+            <div style={{
+              background: ph.active ? `${ph.color}0d` : C.iceSoft,
+              border: `1.5px solid ${ph.active ? ph.color : C.ice}`,
+              borderRadius: 8, padding: '10px 12px',
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: ph.color, marginBottom: 2 }}>{ph.label}</div>
+              <div style={{ fontSize: 10.5, color: C.textMuted, fontWeight: 600, marginBottom: 8 }}>{ph.duration}</div>
+              {ph.items.map((item, j) => (
+                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 5 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: ph.color, flexShrink: 0, marginTop: 5 }} />
+                  <span style={{ fontSize: 10.5, color: C.text, lineHeight: 1.4 }}>{item}</span>
                 </div>
               ))}
+              {ph.gate && (
+                <div style={{
+                  marginTop: 8, padding: '5px 8px', borderRadius: 4,
+                  background: `${ph.color}12`, border: `1px dashed ${ph.color}80`,
+                  fontSize: 9.5, color: ph.color, fontWeight: 700, textAlign: 'center' as const,
+                }}>
+                  ✓ Gate: {ph.gate}
+                </div>
+              )}
+            </div>
+            {i < phases.length - 1 && (
+              <div style={{
+                position: 'absolute', right: -8, top: 32,
+                color: C.textTertiary, fontSize: 16, fontWeight: 700, zIndex: 2,
+              }}>›</div>
+            )}
+          </div>
+        ))}
+      </Fade>
+
+      <Fade delay={0.3}>
+        <div style={{
+          background: C.navy, borderRadius: 6, padding: '10px 20px',
+          marginTop: 16, display: 'flex', gap: 24, alignItems: 'center',
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, color: C.sky, marginBottom: 4, textTransform: 'uppercase' as const }}>
+              Critério de Avanço
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+              Zero regressões · SLA mantido · Aprovação operacional do Cassems
             </div>
           </div>
-        </Fade>
-
-        <Fade delay={0.3}>
-          <div
-            style={{
-              background: C.navy,
-              color: C.ice,
-              borderRadius: 6,
-              padding: '14px 18px',
-              marginTop: 22,
-              fontSize: 12.5,
-              lineHeight: 1.6,
-            }}
-          >
-            <span
-              style={{
-                color: C.sky,
-                fontWeight: 700,
-                letterSpacing: 2,
-                fontSize: 10,
-                display: 'block',
-                marginBottom: 6,
-              }}
-            >
-              CRITÉRIOS PARA O PRIMEIRO FLUXO
-            </span>
-            <strong style={{ color: C.white }}>Volume médio</strong> (estressa
-            sem causar estrago) ·{' '}
-            <strong style={{ color: C.white }}>Bem instrumentado</strong>{' '}
-            (comparação antes/depois objetiva) ·{' '}
-            <strong style={{ color: C.white }}>Não-crítico clinicamente</strong>{' '}
-            (retaguarda, não atendimento) ·{' '}
-            <strong style={{ color: C.white }}>Reversível em minutos</strong>{' '}
-            (feature flag, não cirurgia)
+          <div style={{ width: 1, background: 'rgba(255,255,255,0.12)', alignSelf: 'stretch' }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, color: C.amber, marginBottom: 4, textTransform: 'uppercase' as const }}>
+              Critério de Estabilização
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+              10 dias sem incidente · Divergência ≤ 0,1% vs. 1.5 · Rollback testado e documentado
+            </div>
           </div>
-        </Fade>
-      </div>
+        </div>
+      </Fade>
+
       <SF text="FastComm 1.6 · Implementação" />
     </div>
   )
@@ -1963,28 +1716,24 @@ function Slide12() {
   const phases = [
     {
       title: 'LLM Gateway',
-      prazo: '2 semanas',
       desc: 'Base de governança. Sem isso, tudo acopla.',
       color: C.sky,
       n: 1,
     },
     {
       title: 'Insight do Dashboard',
-      prazo: '2 semanas',
       desc: 'Escopo menor, valor visível, valida a base.',
       color: C.teal,
       n: 2,
     },
     {
       title: 'Front centralizado',
-      prazo: '4 semanas',
       desc: 'Refatoração de navegação e tela de Ajuda.',
       color: C.amber,
       n: 3,
     },
     {
       title: 'RAG da Ajuda',
-      prazo: '3-4 semanas',
       desc: 'Vetorização do manual e chatbot contextual.',
       color: C.coral,
       n: 4,
@@ -2051,16 +1800,6 @@ function Slide12() {
               >
                 {p.title}
               </h4>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  marginBottom: 8,
-                  color: p.color,
-                }}
-              >
-                {p.prazo}
-              </div>
               <p
                 style={{
                   margin: 0,
@@ -2104,15 +1843,6 @@ function Slide12() {
                 }}
               >
                 {p.n}
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: C.textMuted,
-                  marginTop: 6,
-                }}
-              >
-                Mês {p.n}
               </div>
             </div>
           ))}
@@ -2340,19 +2070,6 @@ function Slide14() {
             <p style={{ color: C.ice, fontSize: 18, margin: '0 0 6px' }}>
               Diagnóstico técnico fechado. Direção desenhada. Decisões
               pendentes acima.
-            </p>
-          </Fade>
-          <Fade delay={0.3}>
-            <p
-              style={{
-                color: C.sky,
-                fontStyle: 'italic',
-                fontSize: 14,
-                margin: 0,
-              }}
-            >
-              Próximo encontro: alinhar prioridades das frentes 1 e 2 do
-              roadmap.
             </p>
           </Fade>
         </div>
