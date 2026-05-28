@@ -141,163 +141,193 @@ function DropBadge<T extends string>({ value, options, colors, onChange }: { val
 }
 
 // ─── Timeline View ────────────────────────────────────────────
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+const isWeekend  = (d: Date) => d.getDay() === 0 || d.getDay() === 6
+const DAY_W      = 34  // px per day column
+const LABEL_W    = 180
+const ROW_H      = 46
+
 function TimelineView({ items }: { items: BacklogItem[] }) {
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
-  // Compute start/end for each backlog
   const enriched = items
     .filter(b => b.start_date)
     .map(b => {
       const totalHours = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
-      const workDays   = Math.ceil(totalHours / 8) || 1
+      const workDays   = Math.ceil(totalHours / 1.4) || 1
       const start      = parseDate(b.start_date)
       const end        = totalHours > 0 ? addWorkDays(start, workDays) : new Date(start.getTime() + 86400000)
-      return { ...b, start, end, totalDays: totalHours, workDays }
+      return { ...b, start, end, totalHours, workDays }
     })
 
   if (enriched.length === 0) return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9CA3AF' }}>
       <BarChart2 size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
       <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#374151' }}>Nenhum backlog com data definida</p>
-      <p style={{ margin: 0, fontSize: 13 }}>Defina a data de início de cada backlog na view de lista</p>
+      <p style={{ margin: 0, fontSize: 13 }}>Defina a data de início na view de lista</p>
     </div>
   )
 
-  // Time range
+  // Build day array
   const minDate = new Date(Math.min(...enriched.map(b => b.start.getTime())))
   const maxDate = new Date(Math.max(...enriched.map(b => b.end.getTime())))
-  minDate.setDate(minDate.getDate() - 3)
-  maxDate.setDate(maxDate.getDate() + 7)
+  // start from Monday of minDate's week
+  const start0 = new Date(minDate)
+  start0.setDate(start0.getDate() - ((start0.getDay() + 6) % 7))
+  // end on Sunday of maxDate's week + 1 extra week
+  const end0 = new Date(maxDate)
+  end0.setDate(end0.getDate() + (7 - end0.getDay()) % 7 + 7)
 
-  // Generate week headers
-  const weeks: { label: string; date: Date }[] = []
-  const cur = new Date(minDate)
-  cur.setDate(cur.getDate() - cur.getDay() + 1) // monday
-  while (cur <= maxDate) {
-    weeks.push({
-      label: `${String(cur.getDate()).padStart(2,'0')}/${String(cur.getMonth()+1).padStart(2,'0')}`,
-      date: new Date(cur),
-    })
-    cur.setDate(cur.getDate() + 7)
+  const days: Date[] = []
+  const d = new Date(start0)
+  while (d <= end0) { days.push(new Date(d)); d.setDate(d.getDate() + 1) }
+
+  const dayIndex = (dt: Date) => {
+    const diff = Math.round((dt.getTime() - start0.getTime()) / 86400000)
+    return Math.max(0, Math.min(days.length - 1, diff))
   }
 
-  const totalMs   = maxDate.getTime() - minDate.getTime()
-  const pct       = (d: Date) => Math.max(0, Math.min(100, (d.getTime() - minDate.getTime()) / totalMs * 100))
-  const todayPct  = pct(today)
-  const showToday = todayPct >= 0 && todayPct <= 100
+  // Build week groups for header row 1
+  type WeekGroup = { label: string; span: number; isMonthStart: boolean }
+  const weekGroups: WeekGroup[] = []
+  let wi = 0
+  while (wi < days.length) {
+    const monday = days[wi]
+    const span   = Math.min(7, days.length - wi)
+    const isMonthStart = days[wi].getDate() <= 7
+    weekGroups.push({
+      label: `${String(monday.getDate()).padStart(2,'0')}/${String(monday.getMonth()+1).padStart(2,'0')}`,
+      span,
+      isMonthStart,
+    })
+    wi += 7
+  }
 
-  // Group by priority
   const groups = (['Alta', 'Média', 'Baixa'] as Priority[]).map(priority => ({
     priority,
     items: enriched.filter(b => b.priority === priority),
   })).filter(g => g.items.length > 0)
 
-  const ROW_H   = 44
-  const LABEL_W = 180
+  const totalW = days.length * DAY_W
 
   return (
     <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 3px rgba(14,30,58,0.06)' }}>
-
-      {/* Timeline grid */}
       <div style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: LABEL_W + weeks.length * 80 }}>
+        <div style={{ width: LABEL_W + totalW, minWidth: LABEL_W + totalW }}>
 
-          {/* Week header */}
-          <div style={{ display: 'flex', borderBottom: '2px solid #E5E7EB', background: '#F9FAFB' }}>
-            <div style={{ width: LABEL_W, flexShrink: 0, padding: '10px 16px', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', borderRight: '1px solid #E5E7EB' }}>
-              Backlog
-            </div>
-            <div style={{ flex: 1, position: 'relative', display: 'flex' }}>
-              {weeks.map((w, i) => {
-                const isMonth = w.date.getDate() <= 7
-                return (
-                  <div key={i} style={{
-                    flex: 1, padding: '10px 4px', fontSize: 10, fontWeight: isMonth ? 800 : 600,
-                    color: isMonth ? '#0E1E3A' : '#6B7280', textAlign: 'center',
-                    background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.018)',
-                    borderLeft: `${isMonth ? 2 : 1}px solid ${isMonth ? '#C5CBD5' : '#DCDFE6'}`,
-                    boxSizing: 'border-box' as const,
-                  }}>
-                    {w.label}
-                  </div>
-                )
-              })}
-            </div>
+          {/* Row 1 — Week groups */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
+            <div style={{ width: LABEL_W, flexShrink: 0, borderRight: '2px solid #E5E7EB' }} />
+            {weekGroups.map((wg, i) => (
+              <div key={i} style={{
+                width: wg.span * DAY_W, flexShrink: 0, textAlign: 'center',
+                padding: '5px 0', fontSize: 10, fontWeight: wg.isMonthStart ? 800 : 600,
+                color: wg.isMonthStart ? '#0E1E3A' : '#6B7280',
+                borderLeft: `${wg.isMonthStart ? 2 : 1}px solid ${wg.isMonthStart ? '#B0B8C8' : '#E5E7EB'}`,
+                boxSizing: 'border-box' as const,
+              }}>
+                {wg.label}
+              </div>
+            ))}
           </div>
 
-          {/* Swimlanes by priority */}
+          {/* Row 2 — Day labels */}
+          <div style={{ display: 'flex', borderBottom: '2px solid #D1D5DB', background: '#F9FAFB' }}>
+            <div style={{ width: LABEL_W, flexShrink: 0, padding: '6px 16px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', borderRight: '2px solid #E5E7EB', display: 'flex', alignItems: 'center' }}>
+              Backlog
+            </div>
+            {days.map((day, i) => {
+              const weekend = isWeekend(day)
+              const isToday = day.getTime() === today.getTime()
+              return (
+                <div key={i} style={{
+                  width: DAY_W, flexShrink: 0, textAlign: 'center', padding: '4px 0',
+                  fontSize: 9, fontWeight: isToday ? 800 : 500,
+                  color: isToday ? '#D85A30' : weekend ? '#9CA3AF' : '#374151',
+                  background: weekend ? '#F3F4F6' : isToday ? '#FEF2F2' : 'transparent',
+                  borderLeft: day.getDay() === 1 ? '1px solid #D1D5DB' : '1px solid #F3F4F6',
+                  boxSizing: 'border-box' as const,
+                }}>
+                  <div>{DAY_LABELS[day.getDay()]}</div>
+                  <div style={{ fontSize: 9, color: isToday ? '#D85A30' : weekend ? '#CBD5E1' : '#6B7280', fontWeight: isToday ? 700 : 400 }}>
+                    {day.getDate()}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Swimlanes */}
           {groups.map(group => {
             const pc = PRIORITY_C[group.priority]
             return (
               <div key={group.priority}>
-                {/* Priority label */}
-                <div style={{ display: 'flex', background: `${pc.bar}12`, borderBottom: `1px solid ${pc.bar}30`, borderTop: '1px solid #F3F4F6' }}>
-                  <div style={{ width: LABEL_W, flexShrink: 0, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 6, borderRight: '1px solid #E5E7EB' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: pc.bar, flexShrink: 0, display: 'inline-block' }} />
-                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: pc.bar, textTransform: 'uppercase' }}>{group.priority}</span>
+                {/* Priority header */}
+                <div style={{ display: 'flex', background: `${pc.bar}10`, borderTop: '1px solid #F3F4F6', borderBottom: `1px solid ${pc.bar}25` }}>
+                  <div style={{ width: LABEL_W, flexShrink: 0, padding: '5px 16px', display: 'flex', alignItems: 'center', gap: 6, borderRight: '2px solid #E5E7EB' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: pc.bar, display: 'inline-block' }} />
+                    <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: pc.bar, textTransform: 'uppercase' }}>{group.priority}</span>
                   </div>
-                  <div style={{ flex: 1, position: 'relative' }}>
-                    {showToday && (
-                      <div style={{ position: 'absolute', left: `${todayPct}%`, top: 0, bottom: 0, width: 1, background: '#D85A30', opacity: 0.4, zIndex: 1 }} />
-                    )}
+                  {/* weekend shading for priority row */}
+                  <div style={{ flex: 1, display: 'flex' }}>
+                    {days.map((day, i) => (
+                      <div key={i} style={{ width: DAY_W, flexShrink: 0, background: isWeekend(day) ? 'rgba(0,0,0,0.03)' : 'transparent', borderLeft: day.getDay() === 1 ? '1px solid #E5E7EB' : 'none' }} />
+                    ))}
                   </div>
                 </div>
 
                 {/* Backlog rows */}
                 {group.items.map((b, rowIdx) => {
-                  const left  = pct(b.start)
-                  const right = pct(b.end)
-                  const width = Math.max(right - left, 1.5)
+                  const si      = dayIndex(b.start)
+                  const ei      = dayIndex(b.end)
+                  const barW    = Math.max(ei - si, 1) * DAY_W
+                  const barL    = si * DAY_W
                   const barColor = STATUS_BAR[b.status] ?? '#85B7EB'
-                  const done = b.tasks.filter(t => t.status === 'Concluído').length
-                  const prog = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
+                  const done    = b.tasks.filter(t => t.status === 'Concluído').length
+                  const prog    = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
 
                   return (
-                    <div key={b.id} style={{ display: 'flex', borderBottom: '1px solid #F9FAFB', background: rowIdx % 2 === 0 ? '#fff' : '#FAFAFA' }}>
+                    <div key={b.id} style={{ display: 'flex', borderBottom: '1px solid #F3F4F6', background: rowIdx % 2 === 0 ? '#fff' : '#FCFCFC' }}>
                       {/* Label */}
-                      <div style={{ width: LABEL_W, flexShrink: 0, padding: '0 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: ROW_H, borderRight: '1px solid #E5E7EB', gap: 2 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#0E1E3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span>
-                        <span style={{ fontSize: 10, color: '#6B7280' }}>{b.totalDays}h · {formatDate(b.start_date)}</span>
+                      <div style={{ width: LABEL_W, flexShrink: 0, padding: '0 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: ROW_H, borderRight: '2px solid #E5E7EB', gap: 1 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#0E1E3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span>
+                        <span style={{ fontSize: 9, color: '#6B7280' }}>{b.totalHours}h · início {formatDate(b.start_date)}</span>
                       </div>
 
                       {/* Bar area */}
-                      <div style={{ flex: 1, position: 'relative', height: ROW_H }}>
-                        {/* Week columns — alternating background + border */}
-                        {weeks.map((w, i) => {
-                          const isMonth = w.date.getDate() <= 7
-                          const colW = 100 / weeks.length
-                          return (
-                            <div key={i} style={{
-                              position: 'absolute',
-                              left: `${i * colW}%`,
-                              width: `${colW}%`,
-                              top: 0, bottom: 0,
-                              background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.018)',
-                              borderLeft: `${isMonth ? 2 : 1}px solid ${isMonth ? '#C5CBD5' : '#DCDFE6'}`,
-                              boxSizing: 'border-box' as const,
-                            }} />
-                          )
-                        })}
+                      <div style={{ width: totalW, flexShrink: 0, position: 'relative', height: ROW_H }}>
+                        {/* Day columns background */}
+                        {days.map((day, i) => (
+                          <div key={i} style={{
+                            position: 'absolute', left: i * DAY_W, width: DAY_W, top: 0, bottom: 0,
+                            background: isWeekend(day) ? '#F3F4F6' : day.getTime() === today.getTime() ? '#FEF9F9' : 'transparent',
+                            borderLeft: day.getDay() === 1 ? '1px solid #E5E7EB' : '1px solid #F9FAFB',
+                            boxSizing: 'border-box' as const,
+                          }} />
+                        ))}
 
                         {/* Today line */}
-                        {showToday && (
-                          <div style={{ position: 'absolute', left: `${todayPct}%`, top: 0, bottom: 0, width: 2, background: '#D85A30', zIndex: 2, opacity: 0.7 }} />
+                        {days.some(d => d.getTime() === today.getTime()) && (
+                          <div style={{
+                            position: 'absolute',
+                            left: dayIndex(today) * DAY_W + DAY_W / 2,
+                            top: 0, bottom: 0, width: 2,
+                            background: '#D85A30', opacity: 0.8, zIndex: 2,
+                          }} />
                         )}
 
                         {/* Gantt bar */}
                         <div style={{
-                          position: 'absolute', left: `${left}%`, width: `${width}%`,
+                          position: 'absolute', left: barL, width: barW,
                           top: '50%', transform: 'translateY(-50%)',
-                          height: 26, borderRadius: 5,
+                          height: 28, borderRadius: 5,
                           background: barColor, opacity: b.status === 'Bloqueado' ? 0.5 : 1,
                           display: 'flex', alignItems: 'center', overflow: 'hidden',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
-                          zIndex: 3,
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.18)', zIndex: 3,
                         }}>
-                          {/* Progress fill */}
-                          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${prog}%`, background: 'rgba(255,255,255,0.25)', borderRadius: '5px 0 0 5px' }} />
+                          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${prog}%`, background: 'rgba(255,255,255,0.22)', borderRadius: '5px 0 0 5px' }} />
                           <span style={{ position: 'relative', padding: '0 8px', fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', zIndex: 1 }}>
-                            {b.name} {prog > 0 ? `· ${prog}%` : ''}
+                            {b.name}{prog > 0 ? ` · ${prog}%` : ''}
                           </span>
                         </div>
                       </div>
@@ -308,27 +338,21 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
             )
           })}
 
-          {/* Today legend */}
-          {showToday && (
-            <div style={{ padding: '8px 16px', borderTop: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', gap: 8, background: '#F9FAFB' }}>
-              <div style={{ width: 16, height: 2, background: '#D85A30', borderRadius: 1 }} />
-              <span style={{ fontSize: 11, color: '#6B7280' }}>Hoje — {formatDate(toISO(today))}</span>
-            </div>
-          )}
+          {/* Footer legend */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '10px 20px', borderTop: '1px solid #F3F4F6', background: '#F9FAFB', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280' }}>
+              <div style={{ width: 14, height: 14, background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 2 }} /> Fim de semana
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280' }}>
+              <div style={{ width: 2, height: 14, background: '#D85A30', borderRadius: 1 }} /> Hoje
+            </span>
+            {Object.entries(STATUS_BAR).map(([s, color]) => (
+              <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#374151' }}>
+                <span style={{ width: 11, height: 11, borderRadius: 2, background: color, display: 'inline-block' }} /> {s}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* Legend */}
-      <div style={{ padding: '12px 20px', borderTop: '2px solid #F3F4F6', display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 1, marginRight: 4 }}>Status:</span>
-        {Object.entries(STATUS_BAR).map(([s, color]) => (
-          <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#374151' }}>
-            <span style={{ width: 12, height: 12, borderRadius: 3, background: color, display: 'inline-block' }} /> {s}
-          </span>
-        ))}
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9CA3AF' }}>
-          A largura da barra representa a duração estimada · A cor representa o status atual
-        </span>
       </div>
     </div>
   )
@@ -524,7 +548,7 @@ export default function Roadmap() {
 
             {items.map(b => {
               const bHours   = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
-              const bDays    = Math.ceil(bHours / 8) || 0
+              const bDays    = Math.ceil(bHours / 1.4) || 0
               const done     = b.tasks.filter(t => t.status === 'Concluído').length
               const progress = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
               const endDate  = b.start_date && bDays > 0 ? toISO(addWorkDays(parseDate(b.start_date), bDays)) : null
