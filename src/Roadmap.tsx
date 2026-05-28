@@ -428,7 +428,13 @@ export default function Roadmap() {
       {/* Header */}
       <header style={{ background: '#0E1E3A', padding: '22px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <img
+              src="/Entregas-TL-Fastcomm-AWS/Fastcomm.png"
+              alt="Fastcomm"
+              style={{ height: 52, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+            />
+            <div>
             <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>PRODUTO</p>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>RoadMap Fastcomm — Segundo Semestre</h1>
             <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -436,6 +442,7 @@ export default function Roadmap() {
                 ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
                 : 'Dados salvos em nuvem · Supabase'}
             </p>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
