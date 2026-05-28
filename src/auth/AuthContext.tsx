@@ -48,22 +48,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Restore existing session
+    let mounted = true
+
+    // Restore existing session — always resolve loading
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) setUser(await fetchProfile(session.user))
-      setLoading(false)
+      try {
+        if (session?.user && mounted) setUser(await fetchProfile(session.user))
+      } catch {
+        // Profile fetch failed — treat as unauthenticated
+        if (mounted) setUser(null)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false)
     })
 
     // Keep session in sync
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      if (session?.user) {
-        setUser(await fetchProfile(session.user))
-      } else {
-        setUser(null)
+      try {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user)
+          if (mounted) setUser(profile)
+        } else {
+          if (mounted) setUser(null)
+        }
+      } catch {
+        if (mounted) setUser(null)
+      } finally {
+        if (mounted) setLoading(false)
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const login = async (email: string, password: string): Promise<string | null> => {
