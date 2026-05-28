@@ -63,25 +63,6 @@ export default function App() {
   const [dark, setDark] = useState(false)
   const total = slides.length
 
-  if (view === 'roadmap') {
-    return (
-      <div>
-        <div className="sticky top-0 z-50 flex items-center gap-3 px-6 py-2 bg-[#0E1E3A] border-b border-white/8">
-          <button
-            type="button"
-            onClick={() => setView('slides')}
-            className="flex items-center gap-2 text-xs text-white/70 hover:text-white border border-white/12 bg-white/8 hover:bg-white/15 rounded-md px-3 py-1.5 font-semibold transition-colors"
-          >
-            ← Apresentação
-          </button>
-          <span className="text-white/20 text-xs">|</span>
-          <span className="text-[#85B7EB] text-xs font-bold tracking-wide">RoadMap</span>
-        </div>
-        <Roadmap />
-      </div>
-    )
-  }
-
   const go = useCallback(
     (delta: number) => {
       setDirection(delta)
@@ -121,6 +102,25 @@ export default function App() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [mode, go, showOverview])
+
+  if (view === 'roadmap') {
+    return (
+      <div>
+        <div className="sticky top-0 z-50 flex items-center gap-3 px-6 py-2 bg-[#0E1E3A] border-b border-white/8">
+          <button
+            type="button"
+            onClick={() => setView('slides')}
+            className="flex items-center gap-2 text-xs text-white/70 hover:text-white border border-white/12 bg-white/8 hover:bg-white/15 rounded-md px-3 py-1.5 font-semibold transition-colors"
+          >
+            ← Apresentação
+          </button>
+          <span className="text-white/20 text-xs">|</span>
+          <span className="text-[#85B7EB] text-xs font-bold tracking-wide">RoadMap</span>
+        </div>
+        <Roadmap />
+      </div>
+    )
+  }
 
   if (mode === 'present') {
     const CurrentSlide = slides[current].component
