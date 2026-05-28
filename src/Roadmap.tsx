@@ -433,7 +433,7 @@ export default function Roadmap() {
             <img
               src={logo}
               alt="Fastcomm"
-              style={{ height: 44, width: 'auto', objectFit: 'contain', flexShrink: 0, mixBlendMode: 'screen' as const }}
+              style={{ height: 36, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
             />
             <div>
             <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>PRODUTO</p>
