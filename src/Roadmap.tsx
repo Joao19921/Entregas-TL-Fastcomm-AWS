@@ -426,7 +426,8 @@ export default function Roadmap() {
   const { user, isMaster, logout, audit } = useAuth()
   const [items, setItems]     = useState<BacklogItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving]   = useState(false)
+  const [saving, setSaving]       = useState(false)
+  const [savedId, setSavedId]     = useState<string | null>(null) // ID do backlog recém-salvo
   const [view, setView]       = useState<ViewMode>('list')
 
   useEffect(() => {
@@ -463,6 +464,29 @@ export default function Roadmap() {
   const totalDays     = items.reduce((s, b) => s + b.tasks.reduce((ts, t) => ts + (t.days || 0), 0), 0)
   const totalHours    = totalDays
   const blocked       = items.reduce((s, b) => s + b.tasks.filter(t => t.status === 'Bloqueado').length, 0)
+
+  // Salva explicitamente backlog + todas as tasks no Supabase
+  const saveBacklog = async (bid: string) => {
+    if (!isMaster) return
+    const b = items.find(x => x.id === bid)
+    if (!b) return
+    setSaving(true)
+    await Promise.all([
+      supabase.from('backlogs').upsert({
+        id: b.id, name: b.name, scope: b.scope, priority: b.priority,
+        status: b.status, external_dep: b.external_dep, dep_notes: b.dep_notes,
+        expanded: b.expanded, position: b.position, start_date: b.start_date,
+      }),
+      ...b.tasks.map(t => supabase.from('tasks').upsert({
+        id: t.id, backlog_id: t.backlog_id, name: t.name, owner: t.owner,
+        days: t.days, status: t.status, notes: t.notes, position: t.position,
+      })),
+    ])
+    await audit('SAVE', 'backlogs', bid, { name: b.name, tasks: b.tasks.length })
+    setSaving(false)
+    setSavedId(bid)
+    setTimeout(() => setSavedId(null), 2500)
+  }
 
   const addBacklog = async () => {
     if (!isMaster) return
@@ -848,13 +872,32 @@ export default function Roadmap() {
                           </div>
                         </div>
                       )}
-                      <div style={{ padding: '10px 20px', borderTop: b.tasks.length > 0 ? '1px solid #F3F4F6' : 'none' }}>
+                      <div style={{ padding: '10px 20px', borderTop: b.tasks.length > 0 ? '1px solid #F3F4F6' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                         {isMaster && (
                           <button type="button" onClick={() => addTask(b.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontFamily: 'inherit' }}
                             onMouseEnter={e => (e.currentTarget.style.color = '#0E1E3A')}
                             onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
                             <Plus size={14} /> Adicionar task
+                          </button>
+                        )}
+
+                        {isMaster && (
+                          <button
+                            type="button"
+                            onClick={() => saveBacklog(b.id)}
+                            disabled={saving}
+                            style={{
+                              background: savedId === b.id ? '#1D9E75' : '#0E1E3A',
+                              color: '#fff', border: 'none', borderRadius: 7,
+                              padding: '6px 16px', fontSize: 12, fontWeight: 700,
+                              cursor: saving ? 'not-allowed' : 'pointer',
+                              display: 'flex', alignItems: 'center', gap: 6,
+                              fontFamily: 'inherit', transition: 'background 0.3s',
+                              opacity: saving ? 0.7 : 1,
+                            }}
+                          >
+                            {savedId === b.id ? '✓ Salvo!' : saving ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : '💾 Salvar'}
                           </button>
                         )}
                       </div>
