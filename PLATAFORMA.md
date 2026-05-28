@@ -22,27 +22,79 @@ Plataforma web de gestão de roadmap de produto, construída com arquitetura mod
 
 ---
 
-## 3. Credenciais de Acesso
+## 3. Modos de Acesso
 
-### 3.1 Usuário Master (administrador)
+A plataforma possui **dois modos de acesso**, sem necessidade de instalar nada:
+
+---
+
+### 3.1 Acesso Padrão — Visualização Pública (sem login)
+
+Qualquer pessoa que receber o link acessa o roadmap diretamente em modo leitura, **sem precisar criar conta ou fazer login**.
+
 | Campo | Valor |
 |---|---|
+| **Link** | https://joao19921.github.io/Entregas-TL-Fastcomm-AWS/ |
+| **Perfil** | Viewer — somente leitura |
+| **Requer login?** | ❌ Não |
+
+**O que o visitante vê:**
+- Todos os backlogs e tasks cadastrados
+- Timeline com o Gantt completo
+- Estimativas, status, prioridades e datas
+- Banner discreto no topo: *"Modo visualização — somente leitura"*
+
+**O que o visitante NÃO pode fazer:**
+- Criar, editar ou excluir qualquer dado
+- Acessar funções administrativas
+
+> Este é o link para compartilhar com stakeholders, clientes ou qualquer pessoa que precise acompanhar o roadmap.
+
+---
+
+### 3.2 Acesso Administrativo — Master (com login)
+
+Para criar, editar e gerenciar o roadmap, é necessário fazer login com as credenciais abaixo.
+
+| Campo | Valor |
+|---|---|
+| **Link** | https://joao19921.github.io/Entregas-TL-Fastcomm-AWS/ |
 | **Usuário** | `RoadMap2026` |
 | **Senha** | `FastC@mm2026!` |
 | **Perfil** | Master — acesso total |
-| **E-mail interno** | `roadmap2026@fastcomm.internal` |
+
+**Como acessar:**
+1. Abrir o link acima
+2. Clicar em **"Fazer login"** (banner no topo)
+3. Digitar `RoadMap2026` no campo Usuário
+4. Digitar a senha e clicar em **Entrar**
+
+**O que o Master pode fazer:**
+- Criar, editar e excluir backlogs e tasks
+- Alterar status, prioridade, datas e estimativas
+- Importar e exportar dados
+- Todas as funcionalidades da plataforma
 
 > ⚠️ **Recomendado:** Trocar a senha após o primeiro acesso.  
 > Acesse: Supabase Dashboard → Authentication → Users.
 
-### 3.2 Acesso de Visualização (público)
-Qualquer pessoa com o link abaixo acessa o roadmap em modo leitura, sem necessidade de login:
+---
 
-**Link de visualização:** https://joao19921.github.io/Entregas-TL-Fastcomm-AWS/
+### 3.3 Fluxo de Acesso Resumido
 
-O sistema detecta visitantes não autenticados automaticamente e exibe o banner "Modo visualização — somente leitura".
+```
+Abrir o link
+      │
+      ├─► Não fez login ──► Modo Visualização (leitura)
+      │                     Pode clicar em "Fazer login" a qualquer momento
+      │
+      └─► Fez login (Master) ──► Acesso total (criar/editar/excluir)
+                                  Botão "Sair" no header
+```
 
-### 3.3 GitHub
+---
+
+### 3.4 GitHub (repositório de código)
 | Campo | Valor |
 |---|---|
 | **Usuário GitHub** | `Joao19921` |
