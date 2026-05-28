@@ -154,7 +154,7 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
     .filter(b => b.start_date)
     .map(b => {
       const totalHours = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
-      const workDays   = Math.ceil(totalHours / 1.4) || 1
+      const workDays   = Math.ceil(totalHours / 8) || 1
       const start      = parseDate(b.start_date)
       const end        = totalHours > 0 ? addWorkDays(start, workDays) : new Date(start.getTime() + 86400000)
       return { ...b, start, end, totalHours, workDays }
@@ -548,7 +548,7 @@ export default function Roadmap() {
 
             {items.map(b => {
               const bHours   = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
-              const bDays    = Math.ceil(bHours / 1.4) || 0
+              const bDays    = Math.ceil(bHours / 8) || 0
               const done     = b.tasks.filter(t => t.status === 'Concluído').length
               const progress = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
               const endDate  = b.start_date && bDays > 0 ? toISO(addWorkDays(parseDate(b.start_date), bDays)) : null
