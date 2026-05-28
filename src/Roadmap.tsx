@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Loader2, LayoutList, BarChart2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
-import logo from './assets/Fastcomm.png'
+import logo from './assets/logo-fastcomm.png'
 
 // ─── Types ────────────────────────────────────────────────────
 type Status   = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
