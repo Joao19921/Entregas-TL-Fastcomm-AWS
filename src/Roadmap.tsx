@@ -412,18 +412,32 @@ export default function Roadmap() {
   const [view, setView]       = useState<ViewMode>('list')
 
   useEffect(() => {
+    let cancelled = false
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false) // desiste após 8s
+    }, 8000)
+
     async function load() {
-      setLoading(true)
-      const [{ data: blData }, { data: tkData }] = await Promise.all([
-        supabase.from('backlogs').select('*').order('position'),
-        supabase.from('tasks').select('*').order('position'),
-      ])
-      const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
-      const tasks    = (tkData ?? []) as Task[]
-      setItems(backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) })))
-      setLoading(false)
+      try {
+        setLoading(true)
+        const [{ data: blData, error: blErr }, { data: tkData, error: tkErr }] = await Promise.all([
+          supabase.from('backlogs').select('*').order('position'),
+          supabase.from('tasks').select('*').order('position'),
+        ])
+        if (cancelled) return
+        if (blErr || tkErr) { console.error('Load error', blErr ?? tkErr); setLoading(false); return }
+        const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
+        const tasks    = (tkData ?? []) as Task[]
+        setItems(backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) })))
+      } catch (e) {
+        console.error('Load failed', e)
+      } finally {
+        clearTimeout(timeout)
+        if (!cancelled) setLoading(false)
+      }
     }
     load()
+    return () => { cancelled = true; clearTimeout(timeout) }
   }, [])
 
   const totalBacklogs = items.length
