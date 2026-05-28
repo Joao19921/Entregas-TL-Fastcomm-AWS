@@ -1,0 +1,70 @@
+name: Backup Semanal Supabase
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # toda segunda-feira às 06:00 UTC (03:00 Brasília)
+  workflow_dispatch:       # permite rodar manualmente pelo GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Exportar backlogs do Supabase
+        run: |
+          curl -s \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/backlogs?select=*&order=position" \
+            -o /tmp/backlogs.json
+
+      - name: Exportar tasks do Supabase
+        run: |
+          curl -s \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/tasks?select=*&order=position" \
+            -o /tmp/tasks.json
+
+      - name: Montar arquivo de backup
+        run: |
+          mkdir -p backups
+          DATE=$(date -u +"%Y-%m-%d")
+          node -e "
+            const backlogs = require('/tmp/backlogs.json');
+            const tasks    = require('/tmp/tasks.json');
+            const merged   = backlogs.map(b => ({
+              ...b,
+              tasks: tasks.filter(t => t.backlog_id === b.id)
+            }));
+            const out = {
+              exported_at: new Date().toISOString(),
+              backlogs: merged
+            };
+            require('fs').writeFileSync(
+              'backups/$DATE.json',
+              JSON.stringify(out, null, 2)
+            );
+            console.log('Backup gerado: backups/$DATE.json');
+            console.log('Backlogs:', backlogs.length, '| Tasks:', tasks.length);
+          "
+
+      - name: Manter apenas os últimos 12 backups
+        run: |
+          cd backups
+          ls -t *.json 2>/dev/null | tail -n +13 | xargs -r rm --
+          echo "Backups mantidos:"
+          ls -lh *.json 2>/dev/null || echo "(nenhum ainda)"
+
+      - name: Commitar backup
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "backup: exportação automática Supabase ${{ github.run_id }}"
+          file_pattern: "backups/*.json"
+          commit_author: "GitHub Actions <actions@github.com>"
