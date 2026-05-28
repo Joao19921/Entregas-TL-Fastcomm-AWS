@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
+import { supabase } from './lib/supabase'
+
+// ─── Types ────────────────────────────────────────────────────
 
 type Status   = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
 type Priority = 'Alta' | 'Média' | 'Baixa'
 
 interface Task {
   id: string
+  backlog_id: string
   name: string
   owner: string
   days: number
   status: Status
   notes: string
+  position: number
 }
 
 interface BacklogItem {
@@ -19,12 +24,15 @@ interface BacklogItem {
   scope: string
   priority: Priority
   status: Status
-  externalDep: boolean
+  external_dep: boolean
   expanded: boolean
+  position: number
   tasks: Task[]
 }
 
-const STATUS: Record<Status, { bg: string; text: string; border: string }> = {
+// ─── Colors ───────────────────────────────────────────────────
+
+const STATUS: Record<string, { bg: string; text: string; border: string }> = {
   'Backlog':      { bg: '#F3F4F6', text: '#6B7280', border: '#D1D5DB' },
   'Em progresso': { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
   'Analisa':      { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
@@ -32,29 +40,31 @@ const STATUS: Record<Status, { bg: string; text: string; border: string }> = {
   'Bloqueado':    { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' },
 }
 
-const PRIORITY: Record<Priority, { bg: string; text: string; border: string }> = {
+const PRIORITY: Record<string, { bg: string; text: string; border: string }> = {
   'Alta':  { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' },
   'Média': { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' },
   'Baixa': { bg: '#F0FDF4', text: '#166534', border: '#BBF7D0' },
 }
 
-const STATUSES: Status[]    = ['Backlog', 'Em progresso', 'Analisa', 'Concluído', 'Bloqueado']
+const STATUSES: Status[]     = ['Backlog', 'Em progresso', 'Analisa', 'Concluído', 'Bloqueado']
 const PRIORITIES: Priority[] = ['Alta', 'Média', 'Baixa']
-const KEY = 'rm_fastcomm_v2'
 
-const uid      = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
-const persist  = (d: BacklogItem[]) => localStorage.setItem(KEY, JSON.stringify(d))
-const hydrate  = (): BacklogItem[] => { try { return JSON.parse(localStorage.getItem(KEY) || '[]') } catch { return [] } }
+const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
-function InlineEdit({ value, onChange, placeholder = '—' }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+// ─── Inline editable ──────────────────────────────────────────
+
+function InlineEdit({ value, onChange, placeholder = '—' }: {
+  value: string; onChange: (v: string) => void; placeholder?: string
+}) {
   const [on, setOn] = useState(false)
   const [v, setV]   = useState(value)
+  useEffect(() => { if (!on) setV(value) }, [value, on])
   const ok = () => { onChange(v.trim()); setOn(false) }
   if (on) return (
     <input autoFocus value={v} placeholder={placeholder}
       onChange={e => setV(e.target.value)}
       onBlur={ok}
-      onKeyDown={e => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') { setV(value); setOn(false) } }}
+      onKeyDown={e => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') setOn(false) }}
       style={{ border: '1.5px solid #85B7EB', borderRadius: 4, padding: '2px 7px', fontSize: 'inherit', fontFamily: 'inherit', width: '100%', outline: 'none', boxSizing: 'border-box' as const, background: '#fff' }}
     />
   )
@@ -66,7 +76,11 @@ function InlineEdit({ value, onChange, placeholder = '—' }: { value: string; o
   )
 }
 
-function DropBadge<T extends string>({ value, options, colors, onChange }: { value: T; options: T[]; colors: Record<string, { bg: string; text: string; border: string }>; onChange: (v: T) => void }) {
+// ─── Dropdown badge ───────────────────────────────────────────
+
+function DropBadge<T extends string>({ value, options, colors, onChange }: {
+  value: T; options: T[]; colors: Record<string, { bg: string; text: string; border: string }>; onChange: (v: T) => void
+}) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const c   = colors[value] ?? STATUS['Backlog']
@@ -102,36 +116,101 @@ function DropBadge<T extends string>({ value, options, colors, onChange }: { val
   )
 }
 
+// ─── Main ─────────────────────────────────────────────────────
+
 export default function Roadmap() {
-  const [items, setItems] = useState<BacklogItem[]>(hydrate)
-  useEffect(() => persist(items), [items])
+  const [items, setItems]   = useState<BacklogItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving]   = useState(false)
 
-  const set = (fn: (p: BacklogItem[]) => BacklogItem[]) => setItems(fn)
+  // ── Load from Supabase
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [{ data: blData }, { data: tkData }] = await Promise.all([
+        supabase.from('backlogs').select('*').order('position'),
+        supabase.from('tasks').select('*').order('position'),
+      ])
+      const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
+      const tasks    = (tkData ?? []) as Task[]
+      setItems(backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) })))
+      setLoading(false)
+    }
+    load()
+  }, [])
 
-  const addBacklog = () => set(p => [...p, { id: uid(), name: 'Novo backlog', scope: '', priority: 'Média', status: 'Backlog', externalDep: false, expanded: true, tasks: [] }])
-  const delBacklog = (id: string) => set(p => p.filter(b => b.id !== id))
-  const patchB     = (id: string, patch: Partial<BacklogItem>) => set(p => p.map(b => b.id === id ? { ...b, ...patch } : b))
-  const addTask    = (bid: string) => set(p => p.map(b => b.id !== bid ? b : { ...b, tasks: [...b.tasks, { id: uid(), name: 'Nova task', owner: '', days: 1, status: 'Backlog', notes: '' }] }))
-  const delTask    = (bid: string, tid: string) => set(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.filter(t => t.id !== tid) }))
-  const patchT     = (bid: string, tid: string, patch: Partial<Task>) => set(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.map(t => t.id === tid ? { ...t, ...patch } : t) }))
-
+  // ── Stats
   const totalBacklogs = items.length
   const totalTasks    = items.reduce((s, b) => s + b.tasks.length, 0)
   const totalDays     = items.reduce((s, b) => s + b.tasks.reduce((ts, t) => ts + (t.days || 0), 0), 0)
   const blocked       = items.reduce((s, b) => s + b.tasks.filter(t => t.status === 'Bloqueado').length, 0)
 
+  // ── Backlog ops
+  const addBacklog = async () => {
+    const nb: BacklogItem = { id: uid(), name: 'Novo backlog', scope: '', priority: 'Média', status: 'Backlog', external_dep: false, expanded: true, position: items.length, tasks: [] }
+    setItems(p => [...p, nb])
+    await supabase.from('backlogs').insert({ id: nb.id, name: nb.name, scope: nb.scope, priority: nb.priority, status: nb.status, external_dep: nb.external_dep, expanded: nb.expanded, position: nb.position })
+  }
+
+  const delBacklog = async (id: string) => {
+    setItems(p => p.filter(b => b.id !== id))
+    await supabase.from('backlogs').delete().eq('id', id)
+  }
+
+  const patchB = async (id: string, patch: Partial<BacklogItem>) => {
+    setItems(p => p.map(b => b.id === id ? { ...b, ...patch } : b))
+    setSaving(true)
+    await supabase.from('backlogs').update(patch).eq('id', id)
+    setSaving(false)
+  }
+
+  // ── Task ops
+  const addTask = async (bid: string) => {
+    const nt: Task = { id: uid(), backlog_id: bid, name: 'Nova task', owner: '', days: 1, status: 'Backlog', notes: '', position: items.find(b => b.id === bid)?.tasks.length ?? 0 }
+    setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: [...b.tasks, nt] }))
+    await supabase.from('tasks').insert(nt)
+  }
+
+  const delTask = async (bid: string, tid: string) => {
+    setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.filter(t => t.id !== tid) }))
+    await supabase.from('tasks').delete().eq('id', tid)
+  }
+
+  const patchT = async (bid: string, tid: string, patch: Partial<Task>) => {
+    setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.map(t => t.id === tid ? { ...t, ...patch } : t) }))
+    setSaving(true)
+    await supabase.from('tasks').update(patch).eq('id', tid)
+    setSaving(false)
+  }
+
+  // ── Export / Import
   const exportJSON = () => {
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }))
     a.download = 'roadmap-fastcomm.json'; a.click()
   }
+
   const importJSON = () => {
     const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json'
-    inp.onchange = e => { const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { set(() => JSON.parse(ev.target!.result as string)) } catch { alert('Arquivo inválido') } }; r.readAsText(f) }
+    inp.onchange = async e => {
+      const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return
+      const r = new FileReader()
+      r.onload = async ev => {
+        try {
+          const data: BacklogItem[] = JSON.parse(ev.target!.result as string)
+          for (const b of data) {
+            await supabase.from('backlogs').upsert({ id: b.id, name: b.name, scope: b.scope, priority: b.priority, status: b.status, external_dep: b.external_dep, expanded: b.expanded, position: b.position })
+            for (const t of b.tasks) await supabase.from('tasks').upsert(t)
+          }
+          setItems(data)
+        } catch { alert('Arquivo inválido') }
+      }
+      r.readAsText(f)
+    }
     inp.click()
   }
-  const reset = () => { if (confirm('Apagar todos os dados?')) set(() => []) }
 
+  // ── Render ────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
@@ -140,8 +219,12 @@ export default function Roadmap() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>PRODUTO</p>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>RoadMap Fastcomm — Segundo Semestre</h1>
-            <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Clique em um backlog para ver e gerenciar suas tasks.</p>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>
+              RoadMap Fastcomm — Segundo Semestre
+            </h1>
+            <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              {saving ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : 'Dados salvos em nuvem · Supabase'}
+            </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
@@ -161,23 +244,32 @@ export default function Roadmap() {
 
       {/* Toolbar */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" onClick={addBacklog} style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+        <button type="button" onClick={addBacklog} disabled={loading}
+          style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit', opacity: loading ? 0.6 : 1 }}>
           <Plus size={14} /> Novo backlog
         </button>
-        {[{ label: 'Exportar', icon: <Download size={13} />, fn: exportJSON }, { label: 'Importar', icon: <Upload size={13} />, fn: importJSON }].map(btn => (
-          <button key={btn.label} type="button" onClick={btn.fn} style={{ background: '#fff', color: '#374151', border: '1px solid #D1D5DB', borderRadius: 7, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+        {[
+          { label: 'Exportar', icon: <Download size={13} />, fn: exportJSON },
+          { label: 'Importar', icon: <Upload size={13} />,   fn: importJSON },
+        ].map(btn => (
+          <button key={btn.label} type="button" onClick={btn.fn}
+            style={{ background: '#fff', color: '#374151', border: '1px solid #D1D5DB', borderRadius: 7, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
             {btn.icon} {btn.label}
           </button>
         ))}
-        <div style={{ flex: 1 }} />
-        <button type="button" onClick={reset} style={{ background: 'none', color: '#9CA3AF', border: 'none', borderRadius: 7, padding: '8px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
-          <RotateCcw size={12} /> Resetar
-        </button>
       </div>
 
       {/* List */}
       <main style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {items.length === 0 && (
+
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#9CA3AF' }}>
+            <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>Carregando dados...</p>
+          </div>
+        )}
+
+        {!loading && items.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#9CA3AF' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
             <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#374151' }}>Nenhum backlog ainda</p>
@@ -242,7 +334,7 @@ export default function Roadmap() {
                     <div style={{ width: `${progress}%`, height: '100%', background: '#1D9E75', borderRadius: 99, transition: 'width .3s' }} />
                   </div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280', cursor: 'pointer', userSelect: 'none' as const }}>
-                    <input type="checkbox" checked={b.externalDep} onChange={e => patchB(b.id, { externalDep: e.target.checked })}
+                    <input type="checkbox" checked={b.external_dep} onChange={e => patchB(b.id, { external_dep: e.target.checked })}
                       style={{ accentColor: '#85B7EB', width: 13, height: 13 }} />
                     Dependência externa
                   </label>
@@ -279,7 +371,7 @@ export default function Roadmap() {
                                   onChange={e => patchT(b.id, t.id, { days: Math.max(0, Number(e.target.value)) })}
                                   style={{ width: 60, padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 5, fontSize: 13, textAlign: 'center' as const, outline: 'none', fontFamily: 'inherit', color: '#374151' }}
                                   onFocus={e => (e.currentTarget.style.borderColor = '#85B7EB')}
-                                  onBlur={e =>  (e.currentTarget.style.borderColor = '#E5E7EB')} />
+                                  onBlur={e => (e.currentTarget.style.borderColor = '#E5E7EB')} />
                               </td>
                               <td style={{ padding: '10px 12px', width: 155 }}>
                                 <DropBadge value={t.status} options={STATUSES} colors={STATUS} onChange={v => patchT(b.id, t.id, { status: v })} />
@@ -320,11 +412,9 @@ export default function Roadmap() {
             </div>
           )
         })}
-
-        <p style={{ textAlign: 'center', fontSize: 11, color: '#9CA3AF', margin: '8px 0 0' }}>
-          Salvo automaticamente no navegador · Exportar para compartilhar
-        </p>
       </main>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
