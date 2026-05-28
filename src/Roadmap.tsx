@@ -151,7 +151,6 @@ function DropBadge<T extends string>({ value, options, colors, onChange, readonl
 // ─── Timeline View ────────────────────────────────────────────
 const DAY_LABELS  = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const isWeekend   = (d: Date) => d.getDay() === 0 || d.getDay() === 6
-const DAY_W       = 36   // px per day column
 const LABEL_W     = 180
 const ROW_H       = 46
 const WINDOW_DAYS = 21   // 3 weeks
