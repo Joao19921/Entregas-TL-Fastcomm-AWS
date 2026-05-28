@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Maximize2, Minimize2, Grid, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react'
+import { Maximize2, Minimize2, Grid, ChevronLeft, ChevronRight, Sun, Moon, Map } from 'lucide-react'
 import { slides } from './slides'
+import Roadmap from './Roadmap'
 
 const SLIDE_W = 1330
 const SLIDE_H = 750
@@ -54,12 +55,32 @@ const slideVariants = {
 }
 
 export default function App() {
+  const [view, setView] = useState<'slides' | 'roadmap'>('slides')
   const [mode, setMode] = useState<Mode>('scroll')
   const [current, setCurrent] = useState(0)
   const [direction, setDirection] = useState(1)
   const [showOverview, setShowOverview] = useState(false)
   const [dark, setDark] = useState(false)
   const total = slides.length
+
+  if (view === 'roadmap') {
+    return (
+      <div>
+        <div className="sticky top-0 z-50 flex items-center gap-3 px-6 py-2 bg-[#0E1E3A] border-b border-white/8">
+          <button
+            type="button"
+            onClick={() => setView('slides')}
+            className="flex items-center gap-2 text-xs text-white/70 hover:text-white border border-white/12 bg-white/8 hover:bg-white/15 rounded-md px-3 py-1.5 font-semibold transition-colors"
+          >
+            ← Apresentação
+          </button>
+          <span className="text-white/20 text-xs">|</span>
+          <span className="text-[#85B7EB] text-xs font-bold tracking-wide">RoadMap</span>
+        </div>
+        <Roadmap />
+      </div>
+    )
+  }
 
   const go = useCallback(
     (delta: number) => {
@@ -270,6 +291,15 @@ export default function App() {
           >
             {dark ? <Sun size={13} /> : <Moon size={13} />}
             <span className="hidden md:inline">{dark ? 'Claro' : 'Escuro'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('roadmap')}
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/80 transition-colors"
+            title="Abrir RoadMap"
+          >
+            <Map size={13} />
+            <span className="hidden md:inline">RoadMap</span>
           </button>
           <button
             type="button"
