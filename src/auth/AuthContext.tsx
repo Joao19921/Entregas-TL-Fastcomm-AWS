@@ -52,8 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const done = () => { if (mounted) setLoading(false) }
 
-    // Fallback: nunca ficar em loading por mais de 5 segundos
-    const fallback = setTimeout(done, 5000)
+    // Fallback: nunca ficar em loading por mais de 4 segundos
+    // Se disparar, limpa sessão corrompida do localStorage
+    const fallback = setTimeout(() => {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('sb-'))
+        .forEach(k => localStorage.removeItem(k))
+      done()
+    }, 4000)
 
     async function init() {
       try {
