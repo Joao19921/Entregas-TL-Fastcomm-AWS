@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Loader2, LayoutList, BarChart2 } from 'lucide-react'
+import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, ChevronLeft, Loader2, LayoutList, BarChart2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import logo from './assets/logo-fastcomm.png'
 
@@ -141,14 +141,35 @@ function DropBadge<T extends string>({ value, options, colors, onChange }: { val
 }
 
 // ─── Timeline View ────────────────────────────────────────────
-const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const isWeekend  = (d: Date) => d.getDay() === 0 || d.getDay() === 6
-const DAY_W      = 34  // px per day column
-const LABEL_W    = 180
-const ROW_H      = 46
+const DAY_LABELS  = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+const isWeekend   = (d: Date) => d.getDay() === 0 || d.getDay() === 6
+const DAY_W       = 36   // px per day column
+const LABEL_W     = 180
+const ROW_H       = 46
+const WINDOW_DAYS = 21   // 3 weeks
+
+function getMondayOf(d: Date): Date {
+  const r = new Date(d)
+  r.setDate(r.getDate() - ((r.getDay() + 6) % 7))
+  r.setHours(0, 0, 0, 0)
+  return r
+}
 
 function TimelineView({ items }: { items: BacklogItem[] }) {
   const today = new Date(); today.setHours(0, 0, 0, 0)
+
+  // Window navigation state — starts from Monday of current week
+  const [windowStart, setWindowStart] = useState<Date>(() => getMondayOf(today))
+
+  const shiftWindow = (weeks: number) => {
+    setWindowStart(prev => {
+      const d = new Date(prev)
+      d.setDate(d.getDate() + weeks * 7)
+      return d
+    })
+  }
+
+  const jumpToToday = () => setWindowStart(getMondayOf(today))
 
   const enriched = items
     .filter(b => b.start_date)
@@ -168,40 +189,30 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
     </div>
   )
 
-  // Build day array — always at least today + 3 weeks ahead
-  const threeWeeksAhead = new Date(today); threeWeeksAhead.setDate(today.getDate() + 21)
-  const minDate = enriched.length > 0 ? new Date(Math.min(...enriched.map(b => b.start.getTime()), today.getTime())) : new Date(today)
-  const maxDate = new Date(Math.max(...(enriched.length > 0 ? enriched.map(b => b.end.getTime()) : [today.getTime()]), threeWeeksAhead.getTime()))
-  // start from Monday of minDate's week
-  const start0 = new Date(minDate)
-  start0.setDate(start0.getDate() - ((start0.getDay() + 6) % 7))
-  // end on Sunday of maxDate's week + 1 extra week
-  const end0 = new Date(maxDate)
-  end0.setDate(end0.getDate() + (7 - end0.getDay()) % 7 + 7)
+  // Fixed 3-week window from windowStart
+  const start0  = new Date(windowStart)
+  const end0    = new Date(windowStart); end0.setDate(end0.getDate() + WINDOW_DAYS - 1)
 
   const days: Date[] = []
   const d = new Date(start0)
   while (d <= end0) { days.push(new Date(d)); d.setDate(d.getDate() + 1) }
 
-  const dayIndex = (dt: Date) => {
+  // clamp a date to the visible window, returns pixel offset
+  const dayPx = (dt: Date) => {
     const diff = Math.round((dt.getTime() - start0.getTime()) / 86400000)
-    return Math.max(0, Math.min(days.length - 1, diff))
+    return Math.max(0, Math.min(WINDOW_DAYS - 1, diff)) * DAY_W
   }
+  const inWindow = (b: { start: Date; end: Date }) => b.end > start0 && b.start <= end0
 
-  // Build week groups for header row 1
-  type WeekGroup = { label: string; span: number; isMonthStart: boolean }
-  const weekGroups: WeekGroup[] = []
-  let wi = 0
-  while (wi < days.length) {
+  // Week groups (3 groups of 7)
+  type WG = { label: string; isMonthStart: boolean }
+  const weekGroups: WG[] = []
+  for (let wi = 0; wi < WINDOW_DAYS; wi += 7) {
     const monday = days[wi]
-    const span   = Math.min(7, days.length - wi)
-    const isMonthStart = days[wi].getDate() <= 7
     weekGroups.push({
       label: `${String(monday.getDate()).padStart(2,'0')}/${String(monday.getMonth()+1).padStart(2,'0')}`,
-      span,
-      isMonthStart,
+      isMonthStart: monday.getDate() <= 7,
     })
-    wi += 7
   }
 
   const groups = (['Alta', 'Média', 'Baixa'] as Priority[]).map(priority => ({
@@ -209,19 +220,43 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
     items: enriched.filter(b => b.priority === priority),
   })).filter(g => g.items.length > 0)
 
-  const totalW = days.length * DAY_W
+  const totalW  = WINDOW_DAYS * DAY_W
+  const windowLabel = `${String(start0.getDate()).padStart(2,'0')}/${String(start0.getMonth()+1).padStart(2,'0')}/${start0.getFullYear()} — ${String(end0.getDate()).padStart(2,'0')}/${String(end0.getMonth()+1).padStart(2,'0')}/${end0.getFullYear()}`
+  const isTodayVisible = today >= start0 && today <= end0
 
   return (
     <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 3px rgba(14,30,58,0.06)' }}>
-      <div className="rm-timeline-scroll" style={{ overflowX: 'auto' }}>
+
+      {/* Navigation bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
+        <button type="button" onClick={() => shiftWindow(-3)}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <ChevronLeft size={14} /> 3 semanas
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{windowLabel}</span>
+          {!isTodayVisible && (
+            <button type="button" onClick={jumpToToday}
+              style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Hoje
+            </button>
+          )}
+        </div>
+        <button type="button" onClick={() => shiftWindow(3)}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+          3 semanas <ChevronRight size={14} />
+        </button>
+      </div>
+
+      <div style={{ overflowX: 'auto' }}>
         <div style={{ width: LABEL_W + totalW, minWidth: LABEL_W + totalW }}>
 
-          {/* Row 1 — Week groups */}
+          {/* Row 1 — Week groups (each = 7 days) */}
           <div style={{ display: 'flex', borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
             <div style={{ width: LABEL_W, flexShrink: 0, borderRight: '2px solid #E5E7EB' }} />
             {weekGroups.map((wg, i) => (
               <div key={i} style={{
-                width: wg.span * DAY_W, flexShrink: 0, textAlign: 'center',
+                width: 7 * DAY_W, flexShrink: 0, textAlign: 'center',
                 padding: '5px 0', fontSize: 10, fontWeight: wg.isMonthStart ? 800 : 600,
                 color: wg.isMonthStart ? '#0E1E3A' : '#6B7280',
                 borderLeft: `${wg.isMonthStart ? 2 : 1}px solid ${wg.isMonthStart ? '#B0B8C8' : '#E5E7EB'}`,
@@ -277,12 +312,11 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                   </div>
                 </div>
 
-                {/* Backlog rows */}
-                {group.items.map((b, rowIdx) => {
-                  const si      = dayIndex(b.start)
-                  const ei      = dayIndex(b.end)
-                  const barW    = Math.max(ei - si, 1) * DAY_W
-                  const barL    = si * DAY_W
+                {/* Backlog rows — only those visible in window */}
+                {group.items.filter(inWindow).map((b, rowIdx) => {
+                  const barL    = dayPx(b.start)
+                  const barR    = dayPx(b.end)
+                  const barW    = Math.max(barR - barL, DAY_W)
                   const barColor = STATUS_BAR[b.status] ?? '#85B7EB'
                   const done    = b.tasks.filter(t => t.status === 'Concluído').length
                   const prog    = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
@@ -308,10 +342,10 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                         ))}
 
                         {/* Today line */}
-                        {days.some(d => d.getTime() === today.getTime()) && (
+                        {isTodayVisible && (
                           <div style={{
                             position: 'absolute',
-                            left: dayIndex(today) * DAY_W + DAY_W / 2,
+                            left: dayPx(today) + DAY_W / 2,
                             top: 0, bottom: 0, width: 2,
                             background: '#D85A30', opacity: 0.8, zIndex: 2,
                           }} />
