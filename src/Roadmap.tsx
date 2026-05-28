@@ -542,31 +542,30 @@ export default function Roadmap() {
             </div>
           </div>
 
-          {/* User info + logout */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            {/* Role badge */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
-              background: isMaster ? 'rgba(55,138,221,0.2)' : 'rgba(255,255,255,0.08)',
-              border: `1px solid ${isMaster ? '#378ADD' : 'rgba(255,255,255,0.15)'}`,
-              borderRadius: 20, fontSize: 11, fontWeight: 700,
-              color: isMaster ? '#85B7EB' : 'rgba(255,255,255,0.5)',
-            }}>
-              {isMaster ? <ShieldCheck size={12} /> : <Eye size={12} />}
-              {isMaster ? 'Master' : 'Viewer'}
+          {/* User info + logout — só aparece quando logado */}
+          {user && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
+                background: isMaster ? 'rgba(55,138,221,0.2)' : 'rgba(255,255,255,0.08)',
+                border: `1px solid ${isMaster ? '#378ADD' : 'rgba(255,255,255,0.15)'}`,
+                borderRadius: 20, fontSize: 11, fontWeight: 700,
+                color: isMaster ? '#85B7EB' : 'rgba(255,255,255,0.5)',
+              }}>
+                {isMaster ? <ShieldCheck size={12} /> : <Eye size={12} />}
+                {isMaster ? 'Master' : 'Viewer'}
+              </div>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.name}
+              </span>
+              <button type="button" onClick={logout} title="Sair"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(216,90,48,0.2)'; e.currentTarget.style.color = '#EF9F27' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}>
+                <LogOut size={12} /> Sair
+              </button>
             </div>
-            {/* User name */}
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user?.name}
-            </span>
-            {/* Logout */}
-            <button type="button" onClick={logout} title="Sair"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(216,90,48,0.2)'; e.currentTarget.style.color = '#EF9F27' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}>
-              <LogOut size={12} /> Sair
-            </button>
-          </div>
+          )}
           <div className="rm-counters" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
               { label: 'Backlogs',  val: totalBacklogs, color: '#85B7EB' },
