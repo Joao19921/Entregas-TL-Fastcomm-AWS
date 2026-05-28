@@ -148,10 +148,11 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
   const enriched = items
     .filter(b => b.start_date)
     .map(b => {
-      const totalDays = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
-      const start     = parseDate(b.start_date)
-      const end       = totalDays > 0 ? addWorkDays(start, totalDays) : new Date(start.getTime() + 86400000)
-      return { ...b, start, end, totalDays }
+      const totalHours = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
+      const workDays   = Math.ceil(totalHours / 8) || 1
+      const start      = parseDate(b.start_date)
+      const end        = totalHours > 0 ? addWorkDays(start, workDays) : new Date(start.getTime() + 86400000)
+      return { ...b, start, end, totalDays: totalHours, workDays }
     })
 
   if (enriched.length === 0) return (
@@ -256,7 +257,7 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                       {/* Label */}
                       <div style={{ width: LABEL_W, flexShrink: 0, padding: '0 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: ROW_H, borderRight: '1px solid #E5E7EB', gap: 2 }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: '#0E1E3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span>
-                        <span style={{ fontSize: 10, color: '#6B7280' }}>{b.totalDays}d · {formatDate(b.start_date)}</span>
+                        <span style={{ fontSize: 10, color: '#6B7280' }}>{b.totalDays}h · {formatDate(b.start_date)}</span>
                       </div>
 
                       {/* Bar area */}
@@ -358,6 +359,7 @@ export default function Roadmap() {
   const totalBacklogs = items.length
   const totalTasks    = items.reduce((s, b) => s + b.tasks.length, 0)
   const totalDays     = items.reduce((s, b) => s + b.tasks.reduce((ts, t) => ts + (t.days || 0), 0), 0)
+  const totalHours    = totalDays
   const blocked       = items.reduce((s, b) => s + b.tasks.filter(t => t.status === 'Bloqueado').length, 0)
 
   const addBacklog = async () => {
@@ -449,7 +451,7 @@ export default function Roadmap() {
             {[
               { label: 'Backlogs',  val: totalBacklogs, color: '#85B7EB' },
               { label: 'Tasks',     val: totalTasks,    color: '#1D9E75' },
-              { label: 'Total (d)', val: totalDays,     color: '#EF9F27' },
+              { label: 'Total (h)', val: totalHours,    color: '#EF9F27' },
               { label: 'Bloqueado', val: blocked,       color: '#D85A30' },
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid ${s.color}44`, borderRadius: 8, padding: '8px 18px', textAlign: 'center', minWidth: 76 }}>
@@ -521,7 +523,8 @@ export default function Roadmap() {
             )}
 
             {items.map(b => {
-              const bDays    = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
+              const bHours   = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
+              const bDays    = Math.ceil(bHours / 8) || 0
               const done     = b.tasks.filter(t => t.status === 'Concluído').length
               const progress = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
               const endDate  = b.start_date && bDays > 0 ? toISO(addWorkDays(parseDate(b.start_date), bDays)) : null
@@ -589,7 +592,7 @@ export default function Roadmap() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10, paddingLeft: 34, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 11, color: '#6B7280' }}>
-                        {b.tasks.length} {b.tasks.length === 1 ? 'task' : 'tasks'} · {bDays}d · {progress}% concluído
+                        {b.tasks.length} {b.tasks.length === 1 ? 'task' : 'tasks'} · {bHours}h · {progress}% concluído
                       </span>
                       <div style={{ flex: 1, minWidth: 80, maxWidth: 200, height: 4, background: '#F3F4F6', borderRadius: 99 }}>
                         <div style={{ width: `${progress}%`, height: '100%', background: '#1D9E75', borderRadius: 99, transition: 'width .3s' }} />
@@ -609,7 +612,7 @@ export default function Roadmap() {
                           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                             <thead>
                               <tr style={{ background: '#F9FAFB' }}>
-                                {['#', 'Task', 'Responsável', 'Dias', 'Status', 'Observações', ''].map((h, i) => (
+                                {['#', 'Task', 'Responsável', 'Horas', 'Status', 'Observações', ''].map((h, i) => (
                                   <th key={i} style={{ padding: '8px 12px', textAlign: 'left' as const, fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const, borderBottom: '1px solid #F3F4F6' }}>{h}</th>
                                 ))}
                               </tr>
@@ -653,7 +656,7 @@ export default function Roadmap() {
                           </table>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, padding: '9px 52px 9px 12px', background: '#F9FAFB', borderTop: '1px solid #F3F4F6' }}>
                             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#6B7280', textTransform: 'uppercase' }}>Total do backlog</span>
-                            <span style={{ fontSize: 14, fontWeight: 800, color: '#0E1E3A', minWidth: 48, textAlign: 'right' as const }}>{bDays}d</span>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: '#0E1E3A', minWidth: 48, textAlign: 'right' as const }}>{bHours}h</span>
                           </div>
                         </div>
                       )}
