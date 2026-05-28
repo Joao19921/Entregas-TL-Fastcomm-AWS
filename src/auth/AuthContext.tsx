@@ -50,38 +50,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Restore existing session — always resolve loading
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      try {
-        if (session?.user && mounted) setUser(await fetchProfile(session.user))
-      } catch {
-        // Profile fetch failed — treat as unauthenticated
-        if (mounted) setUser(null)
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }).catch(() => {
-      if (mounted) setLoading(false)
-    })
+    const done = () => { if (mounted) setLoading(false) }
 
-    // Keep session in sync
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
+    // Fallback: nunca ficar em loading por mais de 5 segundos
+    const fallback = setTimeout(done, 5000)
+
+    async function init() {
       try {
-        if (session?.user) {
-          const profile = await fetchProfile(session.user)
-          if (mounted) setUser(profile)
-        } else {
-          if (mounted) setUser(null)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user && mounted) {
+          try {
+            setUser(await fetchProfile(session.user))
+          } catch {
+            setUser(null)
+          }
         }
       } catch {
-        if (mounted) setUser(null)
+        // Supabase indisponível — abre como visitor
       } finally {
-        if (mounted) setLoading(false)
+        clearTimeout(fallback)
+        done()
+      }
+    }
+
+    init()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
+      if (!mounted) return
+      try {
+        if (session?.user) {
+          setUser(await fetchProfile(session.user))
+        } else {
+          setUser(null)
+        }
+      } catch {
+        setUser(null)
       }
     })
 
     return () => {
       mounted = false
+      clearTimeout(fallback)
       subscription.unsubscribe()
     }
   }, [])
