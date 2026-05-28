@@ -252,9 +252,16 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                       {/* Bar area */}
                       <div style={{ flex: 1, position: 'relative', height: ROW_H }}>
                         {/* Week grid lines */}
-                        {weeks.map((_, i) => (
-                          <div key={i} style={{ position: 'absolute', left: `${i / weeks.length * 100}%`, top: 0, bottom: 0, width: 1, background: '#F3F4F6' }} />
-                        ))}
+                        {weeks.map((w, i) => {
+                          const isMonth = w.date.getDate() <= 7
+                          return (
+                            <div key={i} style={{
+                              position: 'absolute', left: `${i / weeks.length * 100}%`,
+                              top: 0, bottom: 0, width: isMonth ? 2 : 1,
+                              background: isMonth ? '#D1D5DB' : '#E5E7EB',
+                            }} />
+                          )
+                        })}
 
                         {/* Today line */}
                         {showToday && (
