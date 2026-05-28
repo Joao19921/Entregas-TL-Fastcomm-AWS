@@ -441,7 +441,7 @@ export default function Roadmap() {
             <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
               {saving
                 ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
-                : 'Dados salvos em nuvem · Supabase'}
+                : 'Alterações salvas automaticamente'}
             </p>
             </div>
           </div>
