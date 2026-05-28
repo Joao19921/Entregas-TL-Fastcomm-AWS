@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, ChevronLeft, Loader2, LayoutList, BarChart2 } from 'lucide-react'
+import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, ChevronLeft, Loader2, LayoutList, BarChart2, LogOut, ShieldCheck, Eye } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import logo from './assets/logo-fastcomm.png'
+import { useAuth } from './auth/AuthContext'
 
 // ─── Types ────────────────────────────────────────────────────
 type Status   = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
@@ -69,11 +70,17 @@ function formatDate(s: string): string {
 }
 
 // ─── InlineEdit ───────────────────────────────────────────────
-function InlineEdit({ value, onChange, placeholder = '—' }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function InlineEdit({ value, onChange, placeholder = '—', readonly = false }: { value: string; onChange: (v: string) => void; placeholder?: string; readonly?: boolean }) {
   const [on, setOn] = useState(false)
   const [v, setV]   = useState(value)
   useEffect(() => { if (!on) setV(value) }, [value, on])
   const ok = () => { onChange(v.trim()); setOn(false) }
+
+  if (readonly) return (
+    <span style={{ display: 'block', color: value ? 'inherit' : '#CBD5E1', fontStyle: value ? 'normal' : 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {value || placeholder}
+    </span>
+  )
   if (on) return (
     <input autoFocus value={v} placeholder={placeholder}
       onChange={e => setV(e.target.value)} onBlur={ok}
@@ -89,13 +96,14 @@ function InlineEdit({ value, onChange, placeholder = '—' }: { value: string; o
 }
 
 // ─── DropBadge (portal — sem clip de overflow) ────────────────
-function DropBadge<T extends string>({ value, options, colors, onChange }: { value: T; options: T[]; colors: Record<string, { bg: string; text: string; border: string }>; onChange: (v: T) => void }) {
+function DropBadge<T extends string>({ value, options, colors, onChange, readonly = false }: { value: T; options: T[]; colors: Record<string, { bg: string; text: string; border: string }>; onChange: (v: T) => void; readonly?: boolean }) {
   const [open, setOpen]   = useState(false)
   const [pos, setPos]     = useState({ top: 0, left: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
   const c = colors[value] ?? STATUS_C['Backlog']
 
   const openMenu = () => {
+    if (readonly) return
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       setPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX })
@@ -230,8 +238,8 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
       {/* Navigation bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
         <button type="button" onClick={() => shiftWindow(-3)}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
-          <ChevronLeft size={14} /> 3 semanas
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <ChevronLeft size={15} /> Anterior
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{windowLabel}</span>
@@ -243,28 +251,30 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
           )}
         </div>
         <button type="button" onClick={() => shiftWindow(3)}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
-          3 semanas <ChevronRight size={14} />
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+          Próximo <ChevronRight size={15} />
         </button>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
         <div style={{ width: LABEL_W + totalW, minWidth: LABEL_W + totalW }}>
 
-          {/* Row 1 — Week groups (each = 7 days) */}
+          {/* Row 1 — Week groups (stretch to fill) */}
           <div style={{ display: 'flex', borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
             <div style={{ width: LABEL_W, flexShrink: 0, borderRight: '2px solid #E5E7EB' }} />
-            {weekGroups.map((wg, i) => (
-              <div key={i} style={{
-                width: 7 * DAY_W, flexShrink: 0, textAlign: 'center',
-                padding: '5px 0', fontSize: 10, fontWeight: wg.isMonthStart ? 800 : 600,
-                color: wg.isMonthStart ? '#0E1E3A' : '#6B7280',
-                borderLeft: `${wg.isMonthStart ? 2 : 1}px solid ${wg.isMonthStart ? '#B0B8C8' : '#E5E7EB'}`,
-                boxSizing: 'border-box' as const,
-              }}>
-                {wg.label}
-              </div>
-            ))}
+            <div style={{ flex: 1, display: 'flex' }}>
+              {weekGroups.map((wg, i) => (
+                <div key={i} style={{
+                  flex: 1, textAlign: 'center',
+                  padding: '6px 0', fontSize: 11, fontWeight: wg.isMonthStart ? 800 : 600,
+                  color: wg.isMonthStart ? '#0E1E3A' : '#6B7280',
+                  borderLeft: `${wg.isMonthStart ? 2 : 1}px solid ${wg.isMonthStart ? '#B0B8C8' : '#E5E7EB'}`,
+                  boxSizing: 'border-box' as const,
+                }}>
+                  {wg.label}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Row 2 — Day labels */}
@@ -395,6 +405,7 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 
 // ─── Main Component ───────────────────────────────────────────
 export default function Roadmap() {
+  const { user, isMaster, logout, audit } = useAuth()
   const [items, setItems]     = useState<BacklogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
@@ -422,39 +433,53 @@ export default function Roadmap() {
   const blocked       = items.reduce((s, b) => s + b.tasks.filter(t => t.status === 'Bloqueado').length, 0)
 
   const addBacklog = async () => {
+    if (!isMaster) return
     const today = toISO(new Date())
     const nb: BacklogItem = { id: uid(), name: 'Novo backlog', scope: '', priority: 'Média', status: 'Backlog', external_dep: false, expanded: true, position: items.length, start_date: today, tasks: [] }
     setItems(p => [...p, nb])
     await supabase.from('backlogs').insert({ id: nb.id, name: nb.name, scope: nb.scope, priority: nb.priority, status: nb.status, external_dep: nb.external_dep, expanded: nb.expanded, position: nb.position, start_date: nb.start_date })
+    await audit('INSERT', 'backlogs', nb.id, { name: nb.name })
   }
 
   const delBacklog = async (id: string) => {
+    if (!isMaster) return
+    const b = items.find(x => x.id === id)
     setItems(p => p.filter(b => b.id !== id))
     await supabase.from('backlogs').delete().eq('id', id)
+    await audit('DELETE', 'backlogs', id, { name: b?.name })
   }
 
   const patchB = async (id: string, patch: Partial<BacklogItem>) => {
+    if (!isMaster) return
     setItems(p => p.map(b => b.id === id ? { ...b, ...patch } : b))
     setSaving(true)
     await supabase.from('backlogs').update(patch).eq('id', id)
+    await audit('UPDATE', 'backlogs', id, patch)
     setSaving(false)
   }
 
   const addTask = async (bid: string) => {
+    if (!isMaster) return
     const nt: Task = { id: uid(), backlog_id: bid, name: 'Nova task', owner: '', days: 1, status: 'Backlog', notes: '', position: items.find(b => b.id === bid)?.tasks.length ?? 0 }
     setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: [...b.tasks, nt] }))
     await supabase.from('tasks').insert(nt)
+    await audit('INSERT', 'tasks', nt.id, { name: nt.name, backlog_id: bid })
   }
 
   const delTask = async (bid: string, tid: string) => {
+    if (!isMaster) return
+    const t = items.find(b => b.id === bid)?.tasks.find(t => t.id === tid)
     setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.filter(t => t.id !== tid) }))
     await supabase.from('tasks').delete().eq('id', tid)
+    await audit('DELETE', 'tasks', tid, { name: t?.name })
   }
 
   const patchT = async (bid: string, tid: string, patch: Partial<Task>) => {
+    if (!isMaster) return
     setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.map(t => t.id === tid ? { ...t, ...patch } : t) }))
     setSaving(true)
     await supabase.from('tasks').update(patch).eq('id', tid)
+    await audit('UPDATE', 'tasks', tid, patch)
     setSaving(false)
   }
 
@@ -491,20 +516,42 @@ export default function Roadmap() {
       <header className="rm-header" style={{ background: '#0E1E3A', padding: '22px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <img
-              src={logo}
-              alt="Fastcomm"
-              style={{ height: 36, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
-            />
+            <img src={logo} alt="Fastcomm" style={{ height: 36, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
             <div>
-            <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>PRODUTO</p>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>RoadMap — Segundo Semestre</h1>
-            <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              {saving
-                ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
-                : 'Alterações salvas automaticamente'}
-            </p>
+              <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>PRODUTO</p>
+              <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>RoadMap — Segundo Semestre</h1>
+              <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {saving
+                  ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
+                  : 'Alterações salvas automaticamente'}
+              </p>
             </div>
+          </div>
+
+          {/* User info + logout */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {/* Role badge */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
+              background: isMaster ? 'rgba(55,138,221,0.2)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${isMaster ? '#378ADD' : 'rgba(255,255,255,0.15)'}`,
+              borderRadius: 20, fontSize: 11, fontWeight: 700,
+              color: isMaster ? '#85B7EB' : 'rgba(255,255,255,0.5)',
+            }}>
+              {isMaster ? <ShieldCheck size={12} /> : <Eye size={12} />}
+              {isMaster ? 'Master' : 'Viewer'}
+            </div>
+            {/* User name */}
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.name}
+            </span>
+            {/* Logout */}
+            <button type="button" onClick={logout} title="Sair"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(216,90,48,0.2)'; e.currentTarget.style.color = '#EF9F27' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}>
+              <LogOut size={12} /> Sair
+            </button>
           </div>
           <div className="rm-counters" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
@@ -524,19 +571,27 @@ export default function Roadmap() {
 
       {/* Toolbar */}
       <div className="rm-toolbar" style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" onClick={addBacklog} disabled={loading}
-          style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit', opacity: loading ? 0.6 : 1 }}>
-          <Plus size={14} /> Novo backlog
-        </button>
-        {[
-          { label: 'Exportar', icon: <Download size={13} />, fn: exportJSON },
-          { label: 'Importar', icon: <Upload size={13} />,   fn: importJSON },
-        ].map(btn => (
-          <button key={btn.label} type="button" onClick={btn.fn}
-            style={{ background: '#fff', color: '#374151', border: '1px solid #D1D5DB', borderRadius: 7, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
-            {btn.icon} {btn.label}
+        {isMaster && (
+          <button type="button" onClick={addBacklog} disabled={loading}
+            style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit', opacity: loading ? 0.6 : 1 }}>
+            <Plus size={14} /> Novo backlog
           </button>
-        ))}
+        )}
+        <button type="button" onClick={exportJSON}
+          style={{ background: '#fff', color: '#374151', border: '1px solid #D1D5DB', borderRadius: 7, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+          <Download size={13} /> Exportar
+        </button>
+        {isMaster && (
+          <button type="button" onClick={importJSON}
+            style={{ background: '#fff', color: '#374151', border: '1px solid #D1D5DB', borderRadius: 7, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+            <Upload size={13} /> Importar
+          </button>
+        )}
+        {!isMaster && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#9CA3AF', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 6, padding: '5px 10px' }}>
+            <Eye size={11} /> Modo leitura — sem permissão para editar
+          </span>
+        )}
 
         <div style={{ flex: 1 }} />
 
@@ -602,23 +657,24 @@ export default function Roadmap() {
                       <div style={{ flex: '2 1 160px', minWidth: 120 }}>
                         <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Backlog</p>
                         <div style={{ fontSize: 15, fontWeight: 700, color: '#0E1E3A' }}>
-                          <InlineEdit value={b.name} onChange={v => patchB(b.id, { name: v })} placeholder="Nome do backlog" />
+                          <InlineEdit value={b.name} onChange={v => patchB(b.id, { name: v })} placeholder="Nome do backlog" readonly={!isMaster} />
                         </div>
                       </div>
 
                       <div style={{ flex: '2 1 130px', minWidth: 100 }}>
                         <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Análise / Escopo</p>
                         <div style={{ fontSize: 13, color: '#374151' }}>
-                          <InlineEdit value={b.scope} onChange={v => patchB(b.id, { scope: v })} placeholder="—" />
+                          <InlineEdit value={b.scope} onChange={v => patchB(b.id, { scope: v })} placeholder="—" readonly={!isMaster} />
                         </div>
                       </div>
 
                       {/* Date range */}
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ margin: '0 0 4px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Início</p>
-                        <input type="date" value={b.start_date || ''} onChange={e => patchB(b.id, { start_date: e.target.value })}
-                          style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit', color: '#374151', outline: 'none', cursor: 'pointer' }}
-                          onFocus={e => (e.currentTarget.style.borderColor = '#85B7EB')}
+                        <input type="date" value={b.start_date || ''} disabled={!isMaster}
+                          onChange={e => isMaster && patchB(b.id, { start_date: e.target.value })}
+                          style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit', color: '#374151', outline: 'none', cursor: isMaster ? 'pointer' : 'default', background: isMaster ? '#fff' : '#F9FAFB' }}
+                          onFocus={e => { if (isMaster) e.currentTarget.style.borderColor = '#85B7EB' }}
                           onBlur={e => (e.currentTarget.style.borderColor = '#E5E7EB')} />
                       </div>
 
@@ -633,20 +689,22 @@ export default function Roadmap() {
 
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ margin: '0 0 4px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Prioridade</p>
-                        <DropBadge value={b.priority} options={PRIORITIES} colors={PRIORITY_C} onChange={v => patchB(b.id, { priority: v })} />
+                        <DropBadge value={b.priority} options={PRIORITIES} colors={PRIORITY_C} onChange={v => isMaster && patchB(b.id, { priority: v })} readonly={!isMaster} />
                       </div>
 
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ margin: '0 0 4px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Status</p>
-                        <DropBadge value={b.status} options={STATUSES} colors={STATUS_C} onChange={v => patchB(b.id, { status: v })} />
+                        <DropBadge value={b.status} options={STATUSES} colors={STATUS_C} onChange={v => isMaster && patchB(b.id, { status: v })} readonly={!isMaster} />
                       </div>
 
-                      <button type="button" onClick={() => delBacklog(b.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 4, display: 'flex', flexShrink: 0, marginLeft: 'auto' }}
-                        onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
-                        onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}>
-                        <Trash2 size={15} />
-                      </button>
+                      {isMaster && (
+                        <button type="button" onClick={() => delBacklog(b.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 4, display: 'flex', flexShrink: 0, marginLeft: 'auto' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                          onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}>
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10, paddingLeft: 34, flexWrap: 'wrap' }}>
@@ -657,7 +715,8 @@ export default function Roadmap() {
                         <div style={{ width: `${progress}%`, height: '100%', background: '#1D9E75', borderRadius: 99, transition: 'width .3s' }} />
                       </div>
                       <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280', cursor: 'pointer', userSelect: 'none' as const }}>
-                        <input type="checkbox" checked={b.external_dep} onChange={e => patchB(b.id, { external_dep: e.target.checked })}
+                        <input type="checkbox" checked={b.external_dep} disabled={!isMaster}
+                          onChange={e => isMaster && patchB(b.id, { external_dep: e.target.checked })}
                           style={{ accentColor: '#85B7EB', width: 13, height: 13 }} />
                         Dependência externa
                       </label>
@@ -683,31 +742,34 @@ export default function Roadmap() {
                                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                   <td style={{ padding: '10px 12px', fontSize: 12, color: '#9CA3AF', width: 32 }}>{idx + 1}</td>
                                   <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: '#85B7EB', minWidth: 150 }}>
-                                    <InlineEdit value={t.name} onChange={v => patchT(b.id, t.id, { name: v })} placeholder="Nome da task" />
+                                    <InlineEdit value={t.name} onChange={v => patchT(b.id, t.id, { name: v })} placeholder="Nome da task" readonly={!isMaster} />
                                   </td>
                                   <td style={{ padding: '10px 12px', fontSize: 13, color: '#374151', minWidth: 110 }}>
-                                    <InlineEdit value={t.owner} onChange={v => patchT(b.id, t.id, { owner: v })} placeholder="—" />
+                                    <InlineEdit value={t.owner} onChange={v => patchT(b.id, t.id, { owner: v })} placeholder="—" readonly={!isMaster} />
                                   </td>
                                   <td style={{ padding: '10px 12px', width: 90 }}>
                                     <input type="number" min={0} step={0.5} value={t.days}
-                                      onChange={e => patchT(b.id, t.id, { days: Math.max(0, Number(e.target.value)) })}
-                                      style={{ width: 60, padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 5, fontSize: 13, textAlign: 'center' as const, outline: 'none', fontFamily: 'inherit', color: '#374151' }}
-                                      onFocus={e => (e.currentTarget.style.borderColor = '#85B7EB')}
+                                      disabled={!isMaster}
+                                      onChange={e => isMaster && patchT(b.id, t.id, { days: Math.max(0, Number(e.target.value)) })}
+                                      style={{ width: 60, padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 5, fontSize: 13, textAlign: 'center' as const, outline: 'none', fontFamily: 'inherit', color: '#374151', background: isMaster ? '#fff' : '#F9FAFB', cursor: isMaster ? 'text' : 'default' }}
+                                      onFocus={e => { if (isMaster) e.currentTarget.style.borderColor = '#85B7EB' }}
                                       onBlur={e => (e.currentTarget.style.borderColor = '#E5E7EB')} />
                                   </td>
                                   <td style={{ padding: '10px 12px', width: 155 }}>
-                                    <DropBadge value={t.status} options={STATUSES} colors={STATUS_C} onChange={v => patchT(b.id, t.id, { status: v })} />
+                                    <DropBadge value={t.status} options={STATUSES} colors={STATUS_C} onChange={v => isMaster && patchT(b.id, t.id, { status: v })} readonly={!isMaster} />
                                   </td>
                                   <td style={{ padding: '10px 12px', fontSize: 13, color: '#6B7280', minWidth: 140 }}>
-                                    <InlineEdit value={t.notes} onChange={v => patchT(b.id, t.id, { notes: v })} placeholder="—" />
+                                    <InlineEdit value={t.notes} onChange={v => patchT(b.id, t.id, { notes: v })} placeholder="—" readonly={!isMaster} />
                                   </td>
                                   <td style={{ padding: '10px 12px', width: 36 }}>
-                                    <button type="button" onClick={() => delTask(b.id, t.id)}
-                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 2, display: 'flex' }}
-                                      onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
-                                      onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}>
-                                      <Trash2 size={13} />
-                                    </button>
+                                    {isMaster && (
+                                      <button type="button" onClick={() => delTask(b.id, t.id)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 2, display: 'flex' }}
+                                        onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                                        onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}>
+                                        <Trash2 size={13} />
+                                      </button>
+                                    )}
                                   </td>
                                 </tr>
                               ))}
@@ -720,12 +782,14 @@ export default function Roadmap() {
                         </div>
                       )}
                       <div style={{ padding: '10px 20px', borderTop: b.tasks.length > 0 ? '1px solid #F3F4F6' : 'none' }}>
-                        <button type="button" onClick={() => addTask(b.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontFamily: 'inherit' }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#0E1E3A')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-                          <Plus size={14} /> Adicionar task
-                        </button>
+                        {isMaster && (
+                          <button type="button" onClick={() => addTask(b.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontFamily: 'inherit' }}
+                            onMouseEnter={e => (e.currentTarget.style.color = '#0E1E3A')}
+                            onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
+                            <Plus size={14} /> Adicionar task
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
