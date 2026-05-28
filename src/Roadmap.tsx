@@ -154,13 +154,13 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
     .filter(b => b.start_date)
     .map(b => {
       const totalHours = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
-      const workDays   = Math.ceil(totalHours / 8) || 1
+      const workDays   = Math.max(Math.ceil(totalHours / 8), 1)
       const start      = parseDate(b.start_date)
-      const end        = totalHours > 0 ? addWorkDays(start, workDays) : new Date(start.getTime() + 86400000)
+      const end        = addWorkDays(start, workDays)
       return { ...b, start, end, totalHours, workDays }
     })
 
-  if (enriched.length === 0) return (
+  if (enriched.length === 0 && items.filter(b => b.start_date).length === 0) return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9CA3AF' }}>
       <BarChart2 size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
       <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#374151' }}>Nenhum backlog com data definida</p>
@@ -168,9 +168,10 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
     </div>
   )
 
-  // Build day array
-  const minDate = new Date(Math.min(...enriched.map(b => b.start.getTime())))
-  const maxDate = new Date(Math.max(...enriched.map(b => b.end.getTime())))
+  // Build day array — always at least today + 3 weeks ahead
+  const threeWeeksAhead = new Date(today); threeWeeksAhead.setDate(today.getDate() + 21)
+  const minDate = enriched.length > 0 ? new Date(Math.min(...enriched.map(b => b.start.getTime()), today.getTime())) : new Date(today)
+  const maxDate = new Date(Math.max(...(enriched.length > 0 ? enriched.map(b => b.end.getTime()) : [today.getTime()]), threeWeeksAhead.getTime()))
   // start from Monday of minDate's week
   const start0 = new Date(minDate)
   start0.setDate(start0.getDate() - ((start0.getDay() + 6) % 7))
@@ -212,7 +213,7 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 
   return (
     <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 3px rgba(14,30,58,0.06)' }}>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="rm-timeline-scroll" style={{ overflowX: 'auto' }}>
         <div style={{ width: LABEL_W + totalW, minWidth: LABEL_W + totalW }}>
 
           {/* Row 1 — Week groups */}
@@ -450,10 +451,10 @@ export default function Roadmap() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="rm-root" style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
       {/* Header */}
-      <header style={{ background: '#0E1E3A', padding: '22px 32px' }}>
+      <header className="rm-header" style={{ background: '#0E1E3A', padding: '22px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
             <img
@@ -471,16 +472,16 @@ export default function Roadmap() {
             </p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="rm-counters" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
               { label: 'Backlogs',  val: totalBacklogs, color: '#85B7EB' },
               { label: 'Tasks',     val: totalTasks,    color: '#1D9E75' },
               { label: 'Total (h)', val: totalHours,    color: '#EF9F27' },
               { label: 'Bloqueado', val: blocked,       color: '#D85A30' },
             ].map(s => (
-              <div key={s.label} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid ${s.color}44`, borderRadius: 8, padding: '8px 18px', textAlign: 'center', minWidth: 76 }}>
+              <div key={s.label} className="rm-counter" style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid ${s.color}44`, borderRadius: 8, padding: '8px 18px', textAlign: 'center', minWidth: 76 }}>
                 <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: s.color, textTransform: 'uppercase' }}>{s.label}</p>
-                <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.val}</p>
+                <p className="val" style={{ margin: 0, fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.val}</p>
               </div>
             ))}
           </div>
@@ -488,7 +489,7 @@ export default function Roadmap() {
       </header>
 
       {/* Toolbar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div className="rm-toolbar" style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <button type="button" onClick={addBacklog} disabled={loading}
           style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit', opacity: loading ? 0.6 : 1 }}>
           <Plus size={14} /> Novo backlog
@@ -523,7 +524,7 @@ export default function Roadmap() {
       </div>
 
       {/* Content */}
-      <main style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <main className="rm-main" style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#9CA3AF' }}>
@@ -701,7 +702,45 @@ export default function Roadmap() {
         )}
       </main>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+          .rm-header { padding: 14px 16px !important; }
+          .rm-header h1 { font-size: 18px !important; }
+          .rm-header img { height: 28px !important; }
+          .rm-counters { gap: 6px !important; }
+          .rm-counter { min-width: 58px !important; padding: 6px 10px !important; }
+          .rm-counter .val { font-size: 16px !important; }
+          .rm-toolbar { padding: 8px 12px !important; flex-wrap: wrap; gap: 6px !important; }
+          .rm-main { padding: 12px 12px !important; }
+          .rm-backlog-header { flex-wrap: wrap; gap: 8px !important; }
+        }
+
+        /* ── 4K (≥2560px) ── */
+        @media (min-width: 2560px) {
+          .rm-root { font-size: 18px; }
+          .rm-header h1 { font-size: 34px !important; }
+          .rm-header img { height: 52px !important; }
+          .rm-counter .val { font-size: 30px !important; }
+          .rm-main { max-width: 2400px !important; }
+          .rm-toolbar { padding: 14px 48px !important; }
+        }
+
+        /* ── 8K (≥7680px) ── */
+        @media (min-width: 7680px) {
+          .rm-root { font-size: 28px; }
+          .rm-header { padding: 40px 80px !important; }
+          .rm-header h1 { font-size: 52px !important; }
+          .rm-header img { height: 80px !important; }
+          .rm-counter .val { font-size: 48px !important; }
+          .rm-main { max-width: 6000px !important; }
+        }
+
+        /* Timeline horizontal scroll on all screens */
+        .rm-timeline-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      `}</style>
     </div>
   )
 }
