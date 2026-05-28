@@ -17,7 +17,7 @@ interface Task {
 
 interface BacklogItem {
   id: string; name: string; scope: string; priority: Priority; status: Status
-  external_dep: boolean; expanded: boolean; position: number
+  external_dep: boolean; dep_notes: string; expanded: boolean; position: number
   start_date: string; tasks: Task[]
 }
 
@@ -435,9 +435,9 @@ export default function Roadmap() {
   const addBacklog = async () => {
     if (!isMaster) return
     const today = toISO(new Date())
-    const nb: BacklogItem = { id: uid(), name: 'Novo backlog', scope: '', priority: 'Média', status: 'Backlog', external_dep: false, expanded: true, position: items.length, start_date: today, tasks: [] }
+    const nb: BacklogItem = { id: uid(), name: 'Novo backlog', scope: '', priority: 'Média', status: 'Backlog', external_dep: false, dep_notes: '', expanded: true, position: items.length, start_date: today, tasks: [] }
     setItems(p => [...p, nb])
-    await supabase.from('backlogs').insert({ id: nb.id, name: nb.name, scope: nb.scope, priority: nb.priority, status: nb.status, external_dep: nb.external_dep, expanded: nb.expanded, position: nb.position, start_date: nb.start_date })
+    await supabase.from('backlogs').insert({ id: nb.id, name: nb.name, scope: nb.scope, priority: nb.priority, status: nb.status, external_dep: nb.external_dep, dep_notes: nb.dep_notes, expanded: nb.expanded, position: nb.position, start_date: nb.start_date })
     await audit('INSERT', 'backlogs', nb.id, { name: nb.name })
   }
 
@@ -644,7 +644,13 @@ export default function Roadmap() {
               const endDate  = b.start_date && bDays > 0 ? toISO(addWorkDays(parseDate(b.start_date), bDays)) : null
 
               return (
-                <div key={b.id} style={{ background: '#fff', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(14,30,58,0.06)' }}>
+                <div key={b.id} style={{
+                  background: b.external_dep ? '#FFFBEB' : '#fff',
+                  borderRadius: 10,
+                  border: b.external_dep ? '1.5px solid #FDE68A' : '1px solid #E5E7EB',
+                  boxShadow: b.external_dep ? '0 1px 6px rgba(239,159,39,0.15)' : '0 1px 3px rgba(14,30,58,0.06)',
+                  transition: 'border-color 0.2s, background 0.2s',
+                }}>
 
                   {/* Backlog header */}
                   <div style={{ padding: '14px 20px' }}>
@@ -714,13 +720,43 @@ export default function Roadmap() {
                       <div style={{ flex: 1, minWidth: 80, maxWidth: 200, height: 4, background: '#F3F4F6', borderRadius: 99 }}>
                         <div style={{ width: `${progress}%`, height: '100%', background: '#1D9E75', borderRadius: 99, transition: 'width .3s' }} />
                       </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280', cursor: 'pointer', userSelect: 'none' as const }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: b.external_dep ? '#92400E' : '#6B7280', cursor: isMaster ? 'pointer' : 'default', userSelect: 'none' as const, fontWeight: b.external_dep ? 700 : 400 }}>
                         <input type="checkbox" checked={b.external_dep} disabled={!isMaster}
                           onChange={e => isMaster && patchB(b.id, { external_dep: e.target.checked })}
-                          style={{ accentColor: '#85B7EB', width: 13, height: 13 }} />
-                        Dependência externa
+                          style={{ accentColor: '#EF9F27', width: 13, height: 13 }} />
+                        ⚠️ Dependência externa
                       </label>
                     </div>
+
+                    {/* Dependency notes — shown when external_dep is checked */}
+                    {b.external_dep && (
+                      <div style={{ margin: '8px 34px 4px', padding: '10px 14px', background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 8 }}>
+                        <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: '#92400E', textTransform: 'uppercase' as const }}>
+                          Observação sobre a dependência
+                        </p>
+                        {isMaster ? (
+                          <textarea
+                            value={b.dep_notes}
+                            onChange={e => patchB(b.id, { dep_notes: e.target.value })}
+                            placeholder="Descreva a dependência externa, responsável, prazo ou impacto..."
+                            rows={2}
+                            style={{
+                              width: '100%', boxSizing: 'border-box' as const,
+                              border: '1px solid #FDE68A', borderRadius: 6, padding: '7px 10px',
+                              fontSize: 12, fontFamily: 'inherit', color: '#374151',
+                              background: '#fff', outline: 'none', resize: 'vertical' as const,
+                              lineHeight: 1.5,
+                            }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#EF9F27')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#FDE68A')}
+                          />
+                        ) : (
+                          <p style={{ margin: 0, fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                            {b.dep_notes || <em style={{ color: '#9CA3AF' }}>Sem observação registrada.</em>}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {b.expanded && (

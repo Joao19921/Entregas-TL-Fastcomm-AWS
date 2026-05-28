@@ -2,19 +2,30 @@ import { useState } from 'react'
 import { useAuth } from './AuthContext'
 import logo from '../assets/logo-fastcomm.png'
 
+// Mapeia identificadores de usuário para e-mails internos
+const USER_MAP: Record<string, string> = {
+  'roadmap2026': 'roadmap2026@fastcomm.internal',
+}
+
+function resolveEmail(input: string): string {
+  const key = input.trim().toLowerCase()
+  return USER_MAP[key] ?? (input.includes('@') ? input.trim() : input.trim())
+}
+
 export default function LoginPage() {
   const { login } = useAuth()
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [showPwd, setShowPwd]   = useState(false)
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword]     = useState('')
+  const [error, setError]           = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [showPwd, setShowPwd]       = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) { setError('Preencha e-mail e senha.'); return }
+    if (!identifier || !password) { setError('Preencha usuário e senha.'); return }
     setLoading(true); setError('')
-    const err = await login(email.trim(), password)
+    const email = resolveEmail(identifier)
+    const err = await login(email, password)
     if (err) setError(err)
     setLoading(false)
   }
@@ -42,17 +53,17 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Email */}
+          {/* Identifier */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6, letterSpacing: 0.3 }}>
-              E-MAIL
+              USUÁRIO
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              autoComplete="email"
+              type="text"
+              value={identifier}
+              onChange={e => setIdentifier(e.target.value)}
+              placeholder="Seu usuário ou e-mail"
+              autoComplete="username"
               style={{
                 width: '100%', boxSizing: 'border-box', padding: '11px 14px',
                 border: '1.5px solid #E5E7EB', borderRadius: 8, fontSize: 14,
