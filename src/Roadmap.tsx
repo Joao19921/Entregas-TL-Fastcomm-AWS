@@ -206,11 +206,20 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
               Backlog
             </div>
             <div style={{ flex: 1, position: 'relative', display: 'flex' }}>
-              {weeks.map((w, i) => (
-                <div key={i} style={{ flex: 1, padding: '10px 6px', fontSize: 10, fontWeight: 600, color: '#6B7280', textAlign: 'center', borderRight: '1px solid #F3F4F6' }}>
-                  {w.label}
-                </div>
-              ))}
+              {weeks.map((w, i) => {
+                const isMonth = w.date.getDate() <= 7
+                return (
+                  <div key={i} style={{
+                    flex: 1, padding: '10px 4px', fontSize: 10, fontWeight: isMonth ? 800 : 600,
+                    color: isMonth ? '#0E1E3A' : '#6B7280', textAlign: 'center',
+                    background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.018)',
+                    borderLeft: `${isMonth ? 2 : 1}px solid ${isMonth ? '#C5CBD5' : '#DCDFE6'}`,
+                    boxSizing: 'border-box' as const,
+                  }}>
+                    {w.label}
+                  </div>
+                )
+              })}
             </div>
           </div>
 
@@ -251,14 +260,19 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 
                       {/* Bar area */}
                       <div style={{ flex: 1, position: 'relative', height: ROW_H }}>
-                        {/* Week grid lines */}
+                        {/* Week columns — alternating background + border */}
                         {weeks.map((w, i) => {
                           const isMonth = w.date.getDate() <= 7
+                          const colW = 100 / weeks.length
                           return (
                             <div key={i} style={{
-                              position: 'absolute', left: `${i / weeks.length * 100}%`,
-                              top: 0, bottom: 0, width: isMonth ? 2 : 1,
-                              background: isMonth ? '#D1D5DB' : '#E5E7EB',
+                              position: 'absolute',
+                              left: `${i * colW}%`,
+                              width: `${colW}%`,
+                              top: 0, bottom: 0,
+                              background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.018)',
+                              borderLeft: `${isMonth ? 2 : 1}px solid ${isMonth ? '#C5CBD5' : '#DCDFE6'}`,
+                              boxSizing: 'border-box' as const,
                             }} />
                           )
                         })}
