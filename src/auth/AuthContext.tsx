@@ -102,17 +102,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string): Promise<string | null> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      if (error.message.includes('Invalid login')) return 'E-mail ou senha incorretos.'
-      if (error.message.includes('Email not confirmed')) return 'E-mail não confirmado. Verifique sua caixa de entrada.'
-      return error.message
+    try {
+      // Timeout de 10s para não travar indefinidamente
+      const result = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 10000)
+        ),
+      ])
+      const { error } = result as Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>
+      if (error) {
+        if (error.message.includes('Invalid login')) return 'Usuário ou senha incorretos.'
+        if (error.message.includes('Email not confirmed')) return 'E-mail não confirmado.'
+        return error.message
+      }
+      return null
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message === 'timeout')
+        return 'Tempo esgotado. Verifique sua conexão e tente novamente.'
+      return 'Erro ao conectar. Tente novamente.'
     }
-    return null
   }
 
   const logout = async () => {
-    await supabase.auth.signOut()
+    try { await supabase.auth.signOut() } catch { /* ignora erro */ }
     setUser(null)
   }
 
