@@ -380,14 +380,18 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                           left: `${leftPct}%`,
                           width: `${widthPct}%`,
                           top: '50%', transform: 'translateY(-50%)',
-                          height: 26, borderRadius: 5,
+                          minHeight: 34, borderRadius: 5,
                           background: barColor, opacity: b.status === 'Bloqueado' ? 0.5 : 1,
-                          display: 'flex', alignItems: 'center', overflow: 'hidden',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.18)', zIndex: 3,
+                          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                          overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.18)', zIndex: 3,
+                          padding: '4px 8px',
                         }}>
                           <div style={{ position: 'absolute', inset: 0, width: `${prog}%`, background: 'rgba(255,255,255,0.22)', borderRadius: '5px 0 0 5px' }} />
-                          <span style={{ position: 'relative', padding: '0 8px', fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', zIndex: 1 }}>
-                            {b.name}{prog > 0 ? ` · ${prog}%` : ''}
+                          <span style={{ position: 'relative', fontSize: 10, fontWeight: 700, color: '#fff', wordBreak: 'break-word', lineHeight: 1.3, zIndex: 1 }}>
+                            {b.name}
+                          </span>
+                          <span style={{ position: 'relative', fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.85)', zIndex: 1, marginTop: 2 }}>
+                            {b.totalHours}h{prog > 0 ? ` · ${prog}%` : ''}
                           </span>
                         </div>
                       </div>
