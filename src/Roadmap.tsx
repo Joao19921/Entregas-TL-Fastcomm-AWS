@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Loader2, LayoutList, BarChart2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import logo from './assets/Fastcomm.png'
 
 // ─── Types ────────────────────────────────────────────────────
 type Status   = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
@@ -430,9 +431,9 @@ export default function Roadmap() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
             <img
-              src="/Entregas-TL-Fastcomm-AWS/Fastcomm.png"
+              src={logo}
               alt="Fastcomm"
-              style={{ height: 52, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+              style={{ height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0, borderRadius: 8, background: '#fff', padding: '4px 10px' }}
             />
             <div>
             <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>PRODUTO</p>
