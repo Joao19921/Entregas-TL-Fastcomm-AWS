@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Loader2, LayoutList, BarChart2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
@@ -86,38 +87,55 @@ function InlineEdit({ value, onChange, placeholder = '—' }: { value: string; o
   )
 }
 
-// ─── DropBadge ────────────────────────────────────────────────
+// ─── DropBadge (portal — sem clip de overflow) ────────────────
 function DropBadge<T extends string>({ value, options, colors, onChange }: { value: T; options: T[]; colors: Record<string, { bg: string; text: string; border: string }>; onChange: (v: T) => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [open, setOpen]   = useState(false)
+  const [pos, setPos]     = useState({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
   const c = colors[value] ?? STATUS_C['Backlog']
+
+  const openMenu = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX })
+    }
+    setOpen(true)
+  }
+
   useEffect(() => {
     if (!open) return
-    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h)
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (!btnRef.current?.contains(t)) setOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [open])
+
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button type="button" onClick={() => setOpen(o => !o)}
+    <>
+      <button ref={btnRef} type="button" onClick={openMenu}
         style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}`, borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
         {value} <ChevronDown size={10} />
       </button>
-      {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 300, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.13)', minWidth: 150, overflow: 'hidden' }}>
+
+      {open && createPortal(
+        <div style={{ position: 'absolute', top: pos.top, left: pos.left, zIndex: 9999, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', minWidth: 160, overflow: 'hidden' }}>
           {options.map(opt => {
             const oc = colors[opt] ?? STATUS_C['Backlog']; const sel = opt === value
             return (
               <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false) }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', fontSize: 12, fontWeight: 600, color: oc.text, background: sel ? oc.bg : '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: 12, fontWeight: 600, color: oc.text, background: sel ? oc.bg : '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
                 onMouseEnter={e => (e.currentTarget.style.background = oc.bg)}
                 onMouseLeave={e => (e.currentTarget.style.background = sel ? oc.bg : '#fff')}>
                 {opt}
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }
 
