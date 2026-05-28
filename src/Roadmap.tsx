@@ -206,9 +206,10 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
   while (d <= end0) { days.push(new Date(d)); d.setDate(d.getDate() + 1) }
 
   // clamp a date to the visible window, returns pixel offset
-  const dayPx = (dt: Date) => {
-    const diff = Math.round((dt.getTime() - start0.getTime()) / 86400000)
-    return Math.max(0, Math.min(WINDOW_DAYS - 1, diff)) * DAY_W
+  // Posição como % da janela (0–100)
+  const dayPct = (dt: Date) => {
+    const diff = (dt.getTime() - start0.getTime()) / 86400000
+    return Math.max(0, Math.min(WINDOW_DAYS, diff)) / WINDOW_DAYS * 100
   }
   const inWindow = (b: { start: Date; end: Date }) => b.end > start0 && b.start <= end0
 
@@ -228,7 +229,6 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
     items: enriched.filter(b => b.priority === priority),
   })).filter(g => g.items.length > 0)
 
-  const totalW  = WINDOW_DAYS * DAY_W
   const windowLabel = `${String(start0.getDate()).padStart(2,'0')}/${String(start0.getMonth()+1).padStart(2,'0')}/${start0.getFullYear()} — ${String(end0.getDate()).padStart(2,'0')}/${String(end0.getMonth()+1).padStart(2,'0')}/${end0.getFullYear()}`
   const isTodayVisible = today >= start0 && today <= end0
 
@@ -256,10 +256,10 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
         </button>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <div style={{ width: LABEL_W + totalW, minWidth: LABEL_W + totalW }}>
+      {/* Grid — 100% largura, sem scroll horizontal */}
+      <div style={{ width: '100%' }}>
 
-          {/* Row 1 — Week groups (stretch to fill) */}
+          {/* Row 1 — Week groups */}
           <div style={{ display: 'flex', borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
             <div style={{ width: LABEL_W, flexShrink: 0, borderRight: '2px solid #E5E7EB' }} />
             <div style={{ flex: 1, display: 'flex' }}>
@@ -282,25 +282,27 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
             <div style={{ width: LABEL_W, flexShrink: 0, padding: '6px 16px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', borderRight: '2px solid #E5E7EB', display: 'flex', alignItems: 'center' }}>
               Backlog
             </div>
-            {days.map((day, i) => {
-              const weekend = isWeekend(day)
-              const isToday = day.getTime() === today.getTime()
-              return (
-                <div key={i} style={{
-                  width: DAY_W, flexShrink: 0, textAlign: 'center', padding: '4px 0',
-                  fontSize: 9, fontWeight: isToday ? 800 : 500,
-                  color: isToday ? '#D85A30' : weekend ? '#9CA3AF' : '#374151',
-                  background: weekend ? '#F3F4F6' : isToday ? '#FEF2F2' : 'transparent',
-                  borderLeft: day.getDay() === 1 ? '1px solid #D1D5DB' : '1px solid #F3F4F6',
-                  boxSizing: 'border-box' as const,
-                }}>
-                  <div>{DAY_LABELS[day.getDay()]}</div>
-                  <div style={{ fontSize: 9, color: isToday ? '#D85A30' : weekend ? '#CBD5E1' : '#6B7280', fontWeight: isToday ? 700 : 400 }}>
-                    {day.getDate()}
+            <div style={{ flex: 1, display: 'flex' }}>
+              {days.map((day, i) => {
+                const weekend = isWeekend(day)
+                const isToday = day.getTime() === today.getTime()
+                return (
+                  <div key={i} style={{
+                    flex: 1, textAlign: 'center', padding: '4px 0',
+                    fontSize: 9, fontWeight: isToday ? 800 : 500,
+                    color: isToday ? '#D85A30' : weekend ? '#9CA3AF' : '#374151',
+                    background: weekend ? '#F3F4F6' : isToday ? '#FEF2F2' : 'transparent',
+                    borderLeft: day.getDay() === 1 ? '1px solid #D1D5DB' : '1px solid #F3F4F6',
+                    boxSizing: 'border-box' as const, minWidth: 0,
+                  }}>
+                    <div>{DAY_LABELS[day.getDay()]}</div>
+                    <div style={{ fontSize: 8, color: isToday ? '#D85A30' : weekend ? '#CBD5E1' : '#6B7280' }}>
+                      {day.getDate()}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
 
           {/* Swimlanes */}
@@ -314,48 +316,60 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: pc.bar, display: 'inline-block' }} />
                     <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: pc.bar, textTransform: 'uppercase' }}>{group.priority}</span>
                   </div>
-                  {/* weekend shading for priority row */}
                   <div style={{ flex: 1, display: 'flex' }}>
                     {days.map((day, i) => (
-                      <div key={i} style={{ width: DAY_W, flexShrink: 0, background: isWeekend(day) ? 'rgba(0,0,0,0.03)' : 'transparent', borderLeft: day.getDay() === 1 ? '1px solid #E5E7EB' : 'none' }} />
+                      <div key={i} style={{ flex: 1, background: isWeekend(day) ? 'rgba(0,0,0,0.03)' : 'transparent', borderLeft: day.getDay() === 1 ? '1px solid #E5E7EB' : 'none', minWidth: 0 }} />
                     ))}
                   </div>
                 </div>
 
-                {/* Backlog rows — only those visible in window */}
+                {/* Backlog rows */}
                 {group.items.filter(inWindow).map((b, rowIdx) => {
-                  const barL    = dayPx(b.start)
-                  const barR    = dayPx(b.end)
-                  const barW    = Math.max(barR - barL, DAY_W)
+                  const leftPct  = dayPct(b.start)
+                  const rightPct = dayPct(b.end)
+                  const widthPct = Math.max(rightPct - leftPct, 100 / WINDOW_DAYS)
                   const barColor = STATUS_BAR[b.status] ?? '#85B7EB'
-                  const done    = b.tasks.filter(t => t.status === 'Concluído').length
-                  const prog    = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
+                  const done     = b.tasks.filter(t => t.status === 'Concluído').length
+                  const prog     = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
+                  const label    = `${b.name} (${b.totalHours}h)`
 
                   return (
-                    <div key={b.id} style={{ display: 'flex', borderBottom: '1px solid #F3F4F6', background: rowIdx % 2 === 0 ? '#fff' : '#FCFCFC' }}>
-                      {/* Label */}
-                      <div style={{ width: LABEL_W, flexShrink: 0, padding: '0 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: ROW_H, borderRight: '2px solid #E5E7EB', gap: 1 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#0E1E3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span>
-                        <span style={{ fontSize: 9, color: '#6B7280' }}>{b.totalHours}h · início {formatDate(b.start_date)}</span>
+                    <div key={b.id} style={{ display: 'flex', borderBottom: '1px solid #F3F4F6', background: rowIdx % 2 === 0 ? '#fff' : '#FCFCFC', minHeight: ROW_H }}>
+
+                      {/* Label — nome completo com quebra de linha */}
+                      <div style={{ width: LABEL_W, flexShrink: 0, padding: '6px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '2px solid #E5E7EB', gap: 2 }}>
+                        <span
+                          title={label}
+                          style={{ fontSize: 11, fontWeight: 700, color: '#0E1E3A', wordBreak: 'break-word', lineHeight: 1.3 }}
+                        >
+                          {b.name}
+                        </span>
+                        <span style={{ fontSize: 9, color: '#EF9F27', fontWeight: 700 }}>
+                          {b.totalHours}h
+                        </span>
+                        <span style={{ fontSize: 9, color: '#9CA3AF' }}>
+                          {formatDate(b.start_date)}
+                        </span>
                       </div>
 
-                      {/* Bar area */}
-                      <div style={{ width: totalW, flexShrink: 0, position: 'relative', height: ROW_H }}>
-                        {/* Day columns background */}
-                        {days.map((day, i) => (
-                          <div key={i} style={{
-                            position: 'absolute', left: i * DAY_W, width: DAY_W, top: 0, bottom: 0,
-                            background: isWeekend(day) ? '#F3F4F6' : day.getTime() === today.getTime() ? '#FEF9F9' : 'transparent',
-                            borderLeft: day.getDay() === 1 ? '1px solid #E5E7EB' : '1px solid #F9FAFB',
-                            boxSizing: 'border-box' as const,
-                          }} />
-                        ))}
+                      {/* Bar area — 100% largura, posições em % */}
+                      <div style={{ flex: 1, position: 'relative', minHeight: ROW_H, minWidth: 0 }}>
+                        {/* Day columns */}
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+                          {days.map((day, i) => (
+                            <div key={i} style={{
+                              flex: 1, minWidth: 0,
+                              background: isWeekend(day) ? '#F3F4F6' : day.getTime() === today.getTime() ? '#FEF9F9' : 'transparent',
+                              borderLeft: day.getDay() === 1 ? '1px solid #E5E7EB' : '1px solid #F9FAFB',
+                              boxSizing: 'border-box' as const,
+                            }} />
+                          ))}
+                        </div>
 
                         {/* Today line */}
                         {isTodayVisible && (
                           <div style={{
-                            position: 'absolute',
-                            left: dayPx(today) + DAY_W / 2,
+                            position: 'absolute', left: `${dayPct(today) + (100 / WINDOW_DAYS / 2)}%`,
                             top: 0, bottom: 0, width: 2,
                             background: '#D85A30', opacity: 0.8, zIndex: 2,
                           }} />
@@ -363,14 +377,16 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 
                         {/* Gantt bar */}
                         <div style={{
-                          position: 'absolute', left: barL, width: barW,
+                          position: 'absolute',
+                          left: `${leftPct}%`,
+                          width: `${widthPct}%`,
                           top: '50%', transform: 'translateY(-50%)',
-                          height: 28, borderRadius: 5,
+                          height: 26, borderRadius: 5,
                           background: barColor, opacity: b.status === 'Bloqueado' ? 0.5 : 1,
                           display: 'flex', alignItems: 'center', overflow: 'hidden',
                           boxShadow: '0 1px 4px rgba(0,0,0,0.18)', zIndex: 3,
                         }}>
-                          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${prog}%`, background: 'rgba(255,255,255,0.22)', borderRadius: '5px 0 0 5px' }} />
+                          <div style={{ position: 'absolute', inset: 0, width: `${prog}%`, background: 'rgba(255,255,255,0.22)', borderRadius: '5px 0 0 5px' }} />
                           <span style={{ position: 'relative', padding: '0 8px', fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', zIndex: 1 }}>
                             {b.name}{prog > 0 ? ` · ${prog}%` : ''}
                           </span>
@@ -398,7 +414,6 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
             ))}
           </div>
         </div>
-      </div>
     </div>
   )
 }
