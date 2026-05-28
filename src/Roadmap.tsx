@@ -42,7 +42,7 @@ const STATUSES: Status[]    = ['Backlog', 'Em progresso', 'Analisa', 'Concluído
 const PRIORITIES: Priority[] = ['Alta', 'Média', 'Baixa']
 const KEY = 'rm_fastcomm_v2'
 
-const uid      = () => crypto.randomUUID()
+const uid      = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 const persist  = (d: BacklogItem[]) => localStorage.setItem(KEY, JSON.stringify(d))
 const hydrate  = (): BacklogItem[] => { try { return JSON.parse(localStorage.getItem(KEY) || '[]') } catch { return [] } }
 
