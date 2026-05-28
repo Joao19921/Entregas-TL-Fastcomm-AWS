@@ -2,113 +2,112 @@ import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────
-type TaskStatus = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
-type BacklogStatus = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
+
+type Status = 'Backlog' | 'Em progresso' | 'Analisa' | 'Concluído' | 'Bloqueado'
 type Priority = 'Alta' | 'Média' | 'Baixa'
 
 interface Task {
   id: string
   name: string
-  responsavel: string
-  estimativa: number
-  status: TaskStatus
-  observacoes: string
+  owner: string
+  days: number
+  status: Status
+  notes: string
 }
 
-interface Backlog {
+interface BacklogItem {
   id: string
   name: string
-  analise: string
-  prioridade: Priority
-  status: BacklogStatus
-  dependenciaExterna: boolean
-  tasks: Task[]
+  scope: string
+  priority: Priority
+  status: Status
+  externalDep: boolean
   expanded: boolean
+  tasks: Task[]
 }
 
-// ─── Constants ────────────────────────────────────────────────
-const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  'Backlog':       { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB' },
-  'Em progresso':  { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
-  'Analisa':       { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
-  'Concluído':     { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' },
-  'Bloqueado':     { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' },
+// ─── Paleta ───────────────────────────────────────────────────
+
+const STATUS: Record<Status, { bg: string; text: string; border: string }> = {
+  'Backlog':      { bg: '#F3F4F6', text: '#6B7280', border: '#D1D5DB' },
+  'Em progresso': { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
+  'Analisa':      { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
+  'Concluído':    { bg: '#ECFDF5', text: '#065F46', border: '#6EE7B7' },
+  'Bloqueado':    { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' },
 }
 
-const PRIORITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+const PRIORITY: Record<Priority, { bg: string; text: string; border: string }> = {
   'Alta':  { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' },
   'Média': { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' },
   'Baixa': { bg: '#F0FDF4', text: '#166534', border: '#BBF7D0' },
 }
 
-const TASK_STATUSES: TaskStatus[]    = ['Backlog', 'Em progresso', 'Analisa', 'Concluído', 'Bloqueado']
-const BACKLOG_STATUSES: BacklogStatus[] = ['Backlog', 'Em progresso', 'Analisa', 'Concluído', 'Bloqueado']
-const PRIORITIES: Priority[]         = ['Alta', 'Média', 'Baixa']
+const STATUSES: Status[]   = ['Backlog', 'Em progresso', 'Analisa', 'Concluído', 'Bloqueado']
+const PRIORITIES: Priority[] = ['Alta', 'Média', 'Baixa']
 
-const STORAGE_KEY = 'fastcomm-roadmap-v1'
-const uid = () => Math.random().toString(36).slice(2, 9)
+// ─── Helpers ──────────────────────────────────────────────────
 
-// ─── Persistence ──────────────────────────────────────────────
-function loadData(): Backlog[] {
+const uid = () => crypto.randomUUID()
+const KEY = 'rm_fastcomm_v2'
+
+function persist(data: BacklogItem[]) {
+  localStorage.setItem(KEY, JSON.stringify(data))
+}
+
+function hydrate(): BacklogItem[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(KEY)
     return raw ? JSON.parse(raw) : []
   } catch {
     return []
   }
 }
 
-// ─── Editable text cell ───────────────────────────────────────
-function Editable({
+// ─── Inline editable text ─────────────────────────────────────
+
+function InlineEdit({
   value,
   onChange,
   placeholder = '—',
-  bold = false,
-  color,
+  className = '',
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
-  bold?: boolean
-  color?: string
+  className?: string
 }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [active, setActive] = useState(false)
+  const [draft, setDraft]   = useState(value)
 
-  const commit = () => { onChange(draft); setEditing(false) }
+  const commit = () => { onChange(draft.trim() || ''); setActive(false) }
 
-  if (editing) {
+  if (active) {
     return (
       <input
-        ref={inputRef}
         autoFocus
         value={draft}
+        placeholder={placeholder}
         onChange={e => setDraft(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Enter') commit()
-          if (e.key === 'Escape') { setDraft(value); setEditing(false) }
-        }}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setActive(false) } }}
+        className={className}
         style={{
-          border: '1.5px solid #85B7EB', borderRadius: 4, padding: '2px 6px',
-          fontSize: 'inherit', fontWeight: bold ? 700 : 400,
-          color: color || 'inherit', background: 'white', outline: 'none',
-          width: '100%', boxSizing: 'border-box',
+          border: '1.5px solid #85B7EB', borderRadius: 4,
+          padding: '2px 7px', fontSize: 'inherit', fontFamily: 'inherit',
+          width: '100%', outline: 'none', boxSizing: 'border-box',
+          background: '#fff', color: 'inherit',
         }}
-        placeholder={placeholder}
       />
     )
   }
 
   return (
     <span
-      onClick={() => { setDraft(value); setEditing(true) }}
+      onClick={() => { setDraft(value); setActive(true) }}
       title="Clique para editar"
       style={{
-        cursor: 'text', display: 'block',
-        fontWeight: bold ? 700 : 400,
-        color: value ? (color || 'inherit') : '#CBD5E1',
+        cursor: 'text', display: 'block', minWidth: 24,
+        color: value ? 'inherit' : '#CBD5E1',
         fontStyle: value ? 'normal' : 'italic',
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
       }}
@@ -118,64 +117,67 @@ function Editable({
   )
 }
 
-// ─── Status/Priority dropdown badge ───────────────────────────
-function Badge({
+// ─── Dropdown badge ───────────────────────────────────────────
+
+function DropBadge<T extends string>({
   value,
-  onChange,
   options,
   colors,
+  onChange,
 }: {
-  value: string
-  onChange: (v: string) => void
-  options: string[]
+  value: T
+  options: T[]
   colors: Record<string, { bg: string; text: string; border: string }>
+  onChange: (v: T) => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const c = colors[value] ?? { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB' }
+  const c   = colors[value] ?? STATUS['Backlog']
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
   }, [open])
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
+        type="button"
         onClick={() => setOpen(o => !o)}
         style={{
           background: c.bg, color: c.text, border: `1px solid ${c.border}`,
           borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600,
           cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-          whiteSpace: 'nowrap',
+          whiteSpace: 'nowrap', fontFamily: 'inherit',
         }}
       >
         {value} <ChevronDown size={10} />
       </button>
+
       {open && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 200,
-          background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', minWidth: 148, overflow: 'hidden',
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 300,
+          background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.13)', minWidth: 150, overflow: 'hidden',
         }}>
           {options.map(opt => {
-            const oc = colors[opt] ?? { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB' }
-            const active = opt === value
+            const oc  = colors[opt] ?? STATUS['Backlog']
+            const sel = opt === value
             return (
               <button
                 key={opt}
+                type="button"
                 onClick={() => { onChange(opt); setOpen(false) }}
                 style={{
                   display: 'block', width: '100%', textAlign: 'left',
                   padding: '8px 14px', fontSize: 12, fontWeight: 600,
-                  color: oc.text, background: active ? oc.bg : 'white', border: 'none', cursor: 'pointer',
+                  color: oc.text, background: sel ? oc.bg : '#fff',
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = oc.bg)}
-                onMouseLeave={e => (e.currentTarget.style.background = active ? oc.bg : 'white')}
+                onMouseLeave={e => (e.currentTarget.style.background = sel ? oc.bg : '#fff')}
               >
                 {opt}
               </button>
@@ -187,257 +189,218 @@ function Badge({
   )
 }
 
-// ─── Main Roadmap Component ───────────────────────────────────
+// ─── Main component ───────────────────────────────────────────
+
 export default function Roadmap() {
-  const [backlogs, setBacklogs] = useState<Backlog[]>(loadData)
+  const [items, setItems] = useState<BacklogItem[]>(hydrate)
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(backlogs))
-  }, [backlogs])
+  useEffect(() => persist(items), [items])
 
-  const mut = (fn: (prev: Backlog[]) => Backlog[]) => setBacklogs(fn)
+  // mutations
+  const set = (fn: (prev: BacklogItem[]) => BacklogItem[]) => setItems(fn)
 
-  // ── Stats
-  const totalBacklogs = backlogs.length
-  const totalTasks    = backlogs.reduce((s, b) => s + b.tasks.length, 0)
-  const totalDays     = backlogs.reduce((s, b) => s + b.tasks.reduce((ts, t) => ts + (t.estimativa || 0), 0), 0)
-  const bloqueados    = backlogs.reduce((s, b) => s + b.tasks.filter(t => t.status === 'Bloqueado').length, 0)
-
-  // ── Backlog ops
-  const addBacklog = () => mut(prev => [...prev, {
-    id: uid(), name: 'Novo backlog', analise: '', prioridade: 'Média',
-    status: 'Backlog', dependenciaExterna: false, tasks: [], expanded: true,
+  const addBacklog = () => set(p => [...p, {
+    id: uid(), name: 'Novo backlog', scope: '', priority: 'Média',
+    status: 'Backlog', externalDep: false, expanded: true, tasks: [],
   }])
 
-  const removeBacklog = (id: string) => mut(prev => prev.filter(b => b.id !== id))
+  const delBacklog = (id: string) => set(p => p.filter(b => b.id !== id))
 
-  const patchBacklog = (id: string, patch: Partial<Backlog>) =>
-    mut(prev => prev.map(b => b.id === id ? { ...b, ...patch } : b))
+  const patchBacklog = (id: string, patch: Partial<BacklogItem>) =>
+    set(p => p.map(b => b.id === id ? { ...b, ...patch } : b))
 
-  const toggleExpanded = (id: string) =>
-    mut(prev => prev.map(b => b.id === id ? { ...b, expanded: !b.expanded } : b))
+  const addTask = (bid: string) => set(p => p.map(b => b.id !== bid ? b : {
+    ...b,
+    tasks: [...b.tasks, { id: uid(), name: 'Nova task', owner: '', days: 1, status: 'Backlog', notes: '' }],
+  }))
 
-  // ── Task ops
-  const addTask = (backlogId: string) =>
-    mut(prev => prev.map(b => b.id === backlogId ? {
-      ...b,
-      tasks: [...b.tasks, { id: uid(), name: 'Nova task', responsavel: '', estimativa: 1, status: 'Backlog', observacoes: '' }],
-    } : b))
+  const delTask = (bid: string, tid: string) =>
+    set(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.filter(t => t.id !== tid) }))
 
-  const removeTask = (backlogId: string, taskId: string) =>
-    mut(prev => prev.map(b => b.id === backlogId
-      ? { ...b, tasks: b.tasks.filter(t => t.id !== taskId) }
-      : b))
+  const patchTask = (bid: string, tid: string, patch: Partial<Task>) =>
+    set(p => p.map(b => b.id !== bid ? b : {
+      ...b, tasks: b.tasks.map(t => t.id === tid ? { ...t, ...patch } : t),
+    }))
 
-  const patchTask = (backlogId: string, taskId: string, patch: Partial<Task>) =>
-    mut(prev => prev.map(b => b.id === backlogId
-      ? { ...b, tasks: b.tasks.map(t => t.id === taskId ? { ...t, ...patch } : t) }
-      : b))
+  // stats
+  const totalBacklogs = items.length
+  const totalTasks    = items.reduce((s, b) => s + b.tasks.length, 0)
+  const totalDays     = items.reduce((s, b) => s + b.tasks.reduce((ts, t) => ts + (t.days || 0), 0), 0)
+  const blocked       = items.reduce((s, b) => s + b.tasks.filter(t => t.status === 'Bloqueado').length, 0)
 
-  // ── Export / Import
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(backlogs, null, 2)], { type: 'application/json' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url; a.download = 'roadmap-fastcomm.json'; a.click()
-    URL.revokeObjectURL(url)
+  // export / import
+  const exportJSON = () => {
+    const a   = document.createElement('a')
+    a.href    = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }))
+    a.download = 'roadmap-fastcomm.json'
+    a.click()
   }
 
-  const importData = () => {
-    const input   = document.createElement('input')
-    input.type    = 'file'
-    input.accept  = '.json'
-    input.onchange = e => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = ev => {
-        try {
-          const data = JSON.parse(ev.target?.result as string)
-          if (Array.isArray(data)) mut(() => data)
-        } catch { alert('Arquivo inválido.') }
-      }
-      reader.readAsText(file)
+  const importJSON = () => {
+    const inp    = document.createElement('input')
+    inp.type     = 'file'
+    inp.accept   = '.json'
+    inp.onchange = e => {
+      const f = (e.target as HTMLInputElement).files?.[0]
+      if (!f) return
+      const r = new FileReader()
+      r.onload = ev => { try { set(() => JSON.parse(ev.target!.result as string)) } catch { alert('Arquivo inválido') } }
+      r.readAsText(f)
     }
-    input.click()
+    inp.click()
   }
 
-  const reset = () => {
-    if (confirm('Resetar todos os dados? Esta ação não pode ser desfeita.')) mut(() => [])
-  }
+  const reset = () => { if (confirm('Apagar todos os dados?')) set(() => []) }
 
-  // ─────────────────────────────────────────────────────────────
+  // ── render ──────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div style={{ background: '#0E1E3A', padding: '20px 32px' }}>
+      {/* Header */}
+      <header style={{ background: '#0E1E3A', padding: '22px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase', marginBottom: 5 }}>
+            <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: '#85B7EB', textTransform: 'uppercase' }}>
               PRODUTO
-            </div>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'white', letterSpacing: -0.5, lineHeight: 1.1 }}>
+            </p>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>
               RoadMap Fastcomm
             </h1>
-            <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>
-              Cada backlog agrupa suas tasks e estimativas. Clique para expandir.
+            <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
+              Clique em um backlog para ver e gerenciar suas tasks.
             </p>
           </div>
+
+          {/* Counters */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
-              { label: 'Backlogs', value: totalBacklogs, color: '#85B7EB' },
-              { label: 'Tasks',    value: totalTasks,    color: '#1D9E75' },
-              { label: 'Total (d)', value: totalDays,   color: '#EF9F27' },
-              { label: 'Bloqueado', value: bloqueados,  color: '#D85A30' },
+              { label: 'Backlogs', val: totalBacklogs, color: '#85B7EB' },
+              { label: 'Tasks',    val: totalTasks,    color: '#1D9E75' },
+              { label: 'Total (d)', val: totalDays,    color: '#EF9F27' },
+              { label: 'Bloqueado', val: blocked,      color: '#D85A30' },
             ].map(s => (
               <div key={s.label} style={{
-                background: 'rgba(255,255,255,0.07)', border: `1px solid ${s.color}50`,
+                background: 'rgba(255,255,255,0.07)', border: `1px solid ${s.color}44`,
                 borderRadius: 8, padding: '8px 18px', textAlign: 'center', minWidth: 76,
               }}>
-                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: s.color, textTransform: 'uppercase', marginBottom: 2 }}>
+                <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: s.color, textTransform: 'uppercase' }}>
                   {s.label}
-                </div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+                </p>
+                <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>
+                  {s.val}
+                </p>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ── Toolbar ────────────────────────────────────────── */}
+      {/* Toolbar */}
       <div style={{
-        background: 'white', padding: '10px 32px',
-        borderBottom: '1px solid #E5E7EB',
-        display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+        background: '#fff', borderBottom: '1px solid #E5E7EB',
+        padding: '10px 32px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
       }}>
-        <button onClick={addBacklog} style={{
-          background: '#0E1E3A', color: 'white', border: 'none', borderRadius: 7,
+        <button type="button" onClick={addBacklog} style={{
+          background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7,
           padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#1A2B4A')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#0E1E3A')}
-        >
+          display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
+        }}>
           <Plus size={14} /> Novo backlog
         </button>
 
-        {[{ label: 'Exportar', icon: <Download size={13} />, fn: exportData },
-          { label: 'Importar', icon: <Upload size={13} />, fn: importData }].map(btn => (
-          <button key={btn.label} onClick={btn.fn} style={{
-            background: 'white', color: '#374151', border: '1px solid #D1D5DB',
+        {[
+          { label: 'Exportar', icon: <Download size={13} />, fn: exportJSON },
+          { label: 'Importar', icon: <Upload size={13} />,   fn: importJSON },
+        ].map(btn => (
+          <button key={btn.label} type="button" onClick={btn.fn} style={{
+            background: '#fff', color: '#374151', border: '1px solid #D1D5DB',
             borderRadius: 7, padding: '8px 14px', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-          }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'white')}
-          >
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
+          }}>
             {btn.icon} {btn.label}
           </button>
         ))}
 
         <div style={{ flex: 1 }} />
 
-        <button onClick={reset} style={{
-          background: 'none', color: '#9CA3AF', border: 'none', borderRadius: 7,
-          padding: '8px 12px', fontSize: 12, fontWeight: 600,
-          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-        }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#374151')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#9CA3AF')}
-        >
+        <button type="button" onClick={reset} style={{
+          background: 'none', color: '#9CA3AF', border: 'none',
+          borderRadius: 7, padding: '8px 12px', fontSize: 12, fontWeight: 600,
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit',
+        }}>
           <RotateCcw size={12} /> Resetar
         </button>
       </div>
 
-      {/* ── Backlogs ───────────────────────────────────────── */}
-      <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 1280, margin: '0 auto' }}>
+      {/* List */}
+      <main style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-        {backlogs.length === 0 && (
+        {items.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#9CA3AF' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>Nenhum backlog ainda</div>
-            <div style={{ fontSize: 13 }}>Clique em "Novo backlog" para começar</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+            <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#374151' }}>Nenhum backlog ainda</p>
+            <p style={{ margin: 0, fontSize: 13 }}>Clique em "Novo backlog" para começar</p>
           </div>
         )}
 
-        {backlogs.map(backlog => {
-          const backlogDays = backlog.tasks.reduce((s, t) => s + (t.estimativa || 0), 0)
-          const done        = backlog.tasks.filter(t => t.status === 'Concluído').length
-          const progress    = backlog.tasks.length === 0 ? 0 : Math.round(done / backlog.tasks.length * 100)
+        {items.map(b => {
+          const bDays    = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
+          const done     = b.tasks.filter(t => t.status === 'Concluído').length
+          const progress = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
 
           return (
-            <div key={backlog.id} style={{
-              background: 'white', borderRadius: 10,
+            <div key={b.id} style={{
+              background: '#fff', borderRadius: 10,
               border: '1px solid #E5E7EB',
-              boxShadow: '0 1px 4px rgba(14,30,58,0.06)',
-              overflow: 'hidden',
+              boxShadow: '0 1px 3px rgba(14,30,58,0.06)',
+              overflow: 'visible',
             }}>
-
-              {/* Backlog header row */}
+              {/* Backlog row */}
               <div style={{ padding: '14px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
 
                   {/* Toggle */}
                   <button
-                    onClick={() => toggleExpanded(backlog.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', flexShrink: 0, padding: 2, display: 'flex' }}
+                    type="button"
+                    onClick={() => patchBacklog(b.id, { expanded: !b.expanded })}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: 2, display: 'flex', flexShrink: 0 }}
                   >
-                    {backlog.expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                    {b.expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   </button>
 
                   {/* Name */}
-                  <div style={{ flex: '2 1 180px', minWidth: 140 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: 3 }}>BACKLOG</div>
-                    <div style={{ fontSize: 15 }}>
-                      <Editable
-                        value={backlog.name}
-                        onChange={v => patchBacklog(backlog.id, { name: v })}
-                        placeholder="Nome do backlog"
-                        bold
-                        color="#0E1E3A"
-                      />
+                  <div style={{ flex: '2 1 170px', minWidth: 130 }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Backlog</p>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0E1E3A' }}>
+                      <InlineEdit value={b.name} onChange={v => patchBacklog(b.id, { name: v })} placeholder="Nome do backlog" />
                     </div>
                   </div>
 
-                  {/* Análise */}
-                  <div style={{ flex: '2 1 150px', minWidth: 120 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: 3 }}>ANÁLISE</div>
-                    <div style={{ fontSize: 13 }}>
-                      <Editable
-                        value={backlog.analise}
-                        onChange={v => patchBacklog(backlog.id, { analise: v })}
-                        placeholder="—"
-                      />
+                  {/* Scope */}
+                  <div style={{ flex: '2 1 140px', minWidth: 110 }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Análise / Escopo</p>
+                    <div style={{ fontSize: 13, color: '#374151' }}>
+                      <InlineEdit value={b.scope} onChange={v => patchBacklog(b.id, { scope: v })} placeholder="—" />
                     </div>
                   </div>
 
                   {/* Priority */}
                   <div style={{ flexShrink: 0 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: 3 }}>PRIORIDADE</div>
-                    <Badge
-                      value={backlog.prioridade}
-                      onChange={v => patchBacklog(backlog.id, { prioridade: v as Priority })}
-                      options={PRIORITIES}
-                      colors={PRIORITY_COLORS}
-                    />
+                    <p style={{ margin: '0 0 4px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Prioridade</p>
+                    <DropBadge value={b.priority} options={PRIORITIES} colors={PRIORITY} onChange={v => patchBacklog(b.id, { priority: v })} />
                   </div>
 
                   {/* Status */}
                   <div style={{ flexShrink: 0 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: 3 }}>STATUS</div>
-                    <Badge
-                      value={backlog.status}
-                      onChange={v => patchBacklog(backlog.id, { status: v as BacklogStatus })}
-                      options={BACKLOG_STATUSES}
-                      colors={STATUS_COLORS}
-                    />
+                    <p style={{ margin: '0 0 4px', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF', textTransform: 'uppercase' }}>Status</p>
+                    <DropBadge value={b.status} options={STATUSES} colors={STATUS} onChange={v => patchBacklog(b.id, { status: v })} />
                   </div>
 
                   {/* Delete */}
                   <button
-                    onClick={() => removeBacklog(backlog.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 4, flexShrink: 0, display: 'flex' }}
+                    type="button"
+                    onClick={() => delBacklog(b.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 4, display: 'flex', flexShrink: 0, marginLeft: 'auto' }}
                     onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
                     onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}
                   >
@@ -445,19 +408,19 @@ export default function Roadmap() {
                   </button>
                 </div>
 
-                {/* Meta row: progress + dependency */}
+                {/* Meta */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10, paddingLeft: 34, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 11, color: '#6B7280' }}>
-                    {backlog.tasks.length} {backlog.tasks.length === 1 ? 'task' : 'tasks'} · Total: {backlogDays}d · Progresso: {progress}%
+                    {b.tasks.length} {b.tasks.length === 1 ? 'task' : 'tasks'} · {bDays}d · {progress}% concluído
                   </span>
-                  <div style={{ flex: 1, minWidth: 80, maxWidth: 180, height: 4, background: '#F3F4F6', borderRadius: 2 }}>
-                    <div style={{ width: `${progress}%`, height: '100%', background: '#1D9E75', borderRadius: 2, transition: 'width 0.35s' }} />
+                  <div style={{ flex: 1, minWidth: 80, maxWidth: 200, height: 4, background: '#F3F4F6', borderRadius: 99 }}>
+                    <div style={{ width: `${progress}%`, height: '100%', background: '#1D9E75', borderRadius: 99, transition: 'width .3s' }} />
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280', cursor: 'pointer', userSelect: 'none' }}>
                     <input
                       type="checkbox"
-                      checked={backlog.dependenciaExterna}
-                      onChange={e => patchBacklog(backlog.id, { dependenciaExterna: e.target.checked })}
+                      checked={b.externalDep}
+                      onChange={e => patchBacklog(b.id, { externalDep: e.target.checked })}
                       style={{ accentColor: '#85B7EB', width: 13, height: 13 }}
                     />
                     Dependência externa
@@ -465,126 +428,108 @@ export default function Roadmap() {
                 </div>
               </div>
 
-              {/* Tasks table */}
-              {backlog.expanded && (
+              {/* Tasks */}
+              {b.expanded && (
                 <div style={{ borderTop: '1px solid #F3F4F6' }}>
-                  {backlog.tasks.length > 0 && (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>
-                          {['#', 'TASK', 'RESPONSÁVEL', 'ESTIMATIVA (D)', 'STATUS', 'OBSERVAÇÕES', ''].map((h, i) => (
-                            <th key={i} style={{
-                              padding: '8px 12px', textAlign: 'left' as const, fontSize: 9,
-                              fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF',
-                              textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const,
-                            }}>
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {backlog.tasks.map((task, idx) => (
-                          <tr
-                            key={task.id}
-                            style={{ borderBottom: '1px solid #F9FAFB', transition: 'background 0.1s' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#FAFAFA')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            <td style={{ padding: '10px 12px', fontSize: 12, color: '#9CA3AF', width: 32 }}>{idx + 1}</td>
 
-                            <td style={{ padding: '10px 12px', fontSize: 13, minWidth: 160 }}>
-                              <Editable
-                                value={task.name}
-                                onChange={v => patchTask(backlog.id, task.id, { name: v })}
-                                placeholder="Nome da task"
-                                bold
-                                color="#85B7EB"
-                              />
-                            </td>
-
-                            <td style={{ padding: '10px 12px', fontSize: 13, minWidth: 110 }}>
-                              <Editable
-                                value={task.responsavel}
-                                onChange={v => patchTask(backlog.id, task.id, { responsavel: v })}
-                                placeholder="—"
-                              />
-                            </td>
-
-                            <td style={{ padding: '10px 12px', width: 120 }}>
-                              <input
-                                type="number"
-                                value={task.estimativa}
-                                min={0}
-                                step={0.5}
-                                onChange={e => patchTask(backlog.id, task.id, { estimativa: Number(e.target.value) })}
-                                style={{
-                                  width: 64, padding: '4px 8px', border: '1px solid #E5E7EB',
-                                  borderRadius: 5, fontSize: 13, textAlign: 'center' as const,
-                                  outline: 'none', fontFamily: 'inherit', color: '#374151',
-                                }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#85B7EB')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E5E7EB')}
-                              />
-                            </td>
-
-                            <td style={{ padding: '10px 12px', width: 150 }}>
-                              <Badge
-                                value={task.status}
-                                onChange={v => patchTask(backlog.id, task.id, { status: v as TaskStatus })}
-                                options={TASK_STATUSES}
-                                colors={STATUS_COLORS}
-                              />
-                            </td>
-
-                            <td style={{ padding: '10px 12px', fontSize: 13, color: '#6B7280', minWidth: 140 }}>
-                              <Editable
-                                value={task.observacoes}
-                                onChange={v => patchTask(backlog.id, task.id, { observacoes: v })}
-                                placeholder="—"
-                              />
-                            </td>
-
-                            <td style={{ padding: '10px 12px', width: 36 }}>
-                              <button
-                                onClick={() => removeTask(backlog.id, task.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 2, display: 'flex' }}
-                                onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
-                                onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </td>
+                  {b.tasks.length > 0 && (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
+                        <thead>
+                          <tr style={{ background: '#F9FAFB' }}>
+                            {['#', 'Task', 'Responsável', 'Dias', 'Status', 'Observações', ''].map((h, i) => (
+                              <th key={i} style={{
+                                padding: '8px 12px', textAlign: 'left', fontSize: 9,
+                                fontWeight: 700, letterSpacing: 1.5, color: '#9CA3AF',
+                                textTransform: 'uppercase', whiteSpace: 'nowrap',
+                                borderBottom: '1px solid #F3F4F6',
+                              }}>{h}</th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                        </thead>
+                        <tbody>
+                          {b.tasks.map((t, idx) => (
+                            <tr
+                              key={t.id}
+                              style={{ borderBottom: '1px solid #F9FAFB' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = '#FAFAFA')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                            >
+                              <td style={{ padding: '10px 12px', fontSize: 12, color: '#9CA3AF', width: 32 }}>{idx + 1}</td>
 
-                  {/* Total row */}
-                  {backlog.tasks.length > 0 && (
-                    <div style={{
-                      display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12,
-                      padding: '9px 60px 9px 12px',
-                      background: '#F9FAFB', borderTop: '1px solid #F3F4F6',
-                    }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: '#6B7280', textTransform: 'uppercase' }}>
-                        Total do backlog
-                      </span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: '#0E1E3A', minWidth: 40, textAlign: 'center' }}>
-                        {backlogDays}d
-                      </span>
+                              <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: '#85B7EB', minWidth: 150 }}>
+                                <InlineEdit value={t.name} onChange={v => patchTask(b.id, t.id, { name: v })} placeholder="Nome da task" />
+                              </td>
+
+                              <td style={{ padding: '10px 12px', fontSize: 13, color: '#374151', minWidth: 110 }}>
+                                <InlineEdit value={t.owner} onChange={v => patchTask(b.id, t.id, { owner: v })} placeholder="—" />
+                              </td>
+
+                              <td style={{ padding: '10px 12px', width: 90 }}>
+                                <input
+                                  type="number" min={0} step={0.5}
+                                  value={t.days}
+                                  onChange={e => patchTask(b.id, t.id, { days: Math.max(0, Number(e.target.value)) })}
+                                  style={{
+                                    width: 60, padding: '4px 6px', border: '1px solid #E5E7EB',
+                                    borderRadius: 5, fontSize: 13, textAlign: 'center',
+                                    outline: 'none', fontFamily: 'inherit', color: '#374151',
+                                  }}
+                                  onFocus={e => (e.currentTarget.style.borderColor = '#85B7EB')}
+                                  onBlur={e =>  (e.currentTarget.style.borderColor = '#E5E7EB')}
+                                />
+                              </td>
+
+                              <td style={{ padding: '10px 12px', width: 155 }}>
+                                <DropBadge value={t.status} options={STATUSES} colors={STATUS} onChange={v => patchTask(b.id, t.id, { status: v })} />
+                              </td>
+
+                              <td style={{ padding: '10px 12px', fontSize: 13, color: '#6B7280', minWidth: 140 }}>
+                                <InlineEdit value={t.notes} onChange={v => patchTask(b.id, t.id, { notes: v })} placeholder="—" />
+                              </td>
+
+                              <td style={{ padding: '10px 12px', width: 36 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => delTask(b.id, t.id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 2, display: 'flex' }}
+                                  onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                                  onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      {/* Total row */}
+                      <div style={{
+                        display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+                        gap: 10, padding: '9px 52px 9px 12px',
+                        background: '#F9FAFB', borderTop: '1px solid #F3F4F6',
+                      }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#6B7280', textTransform: 'uppercase' }}>
+                          Total do backlog
+                        </span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: '#0E1E3A', minWidth: 48, textAlign: 'right' }}>
+                          {bDays}d
+                        </span>
+                      </div>
                     </div>
                   )}
 
                   {/* Add task */}
-                  <div style={{ padding: '10px 20px', borderTop: backlog.tasks.length > 0 ? '1px solid #F3F4F6' : 'none' }}>
+                  <div style={{ padding: '10px 20px', borderTop: b.tasks.length > 0 ? '1px solid #F3F4F6' : 'none' }}>
                     <button
-                      onClick={() => addTask(backlog.id)}
+                      type="button"
+                      onClick={() => addTask(b.id)}
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer',
                         fontSize: 13, fontWeight: 600, color: '#6B7280',
-                        display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '4px 0', fontFamily: 'inherit',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.color = '#0E1E3A')}
                       onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}
@@ -598,10 +543,10 @@ export default function Roadmap() {
           )
         })}
 
-        <p style={{ textAlign: 'center', fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
-          Alterações salvas automaticamente neste navegador · Use Exportar para compartilhar
+        <p style={{ textAlign: 'center', fontSize: 11, color: '#9CA3AF', margin: '8px 0 0' }}>
+          Salvo automaticamente no navegador · Exportar para compartilhar
         </p>
-      </div>
+      </main>
     </div>
   )
 }
