@@ -25,7 +25,7 @@ export default function LoginPage() {
     if (!identifier || !password) { setError('Preencha usuário e senha.'); return }
     setLoading(true); setError('')
     const email = resolveEmail(identifier)
-    const err = await login(email, password)
+    const err = await login(email, password, identifier.trim())
     if (err) setError(err)
     setLoading(false)
   }

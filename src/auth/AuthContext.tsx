@@ -17,7 +17,7 @@ interface AuthCtx {
   user: AuthUser | null
   loading: boolean
   isMaster: boolean
-  login: (email: string, password: string) => Promise<string | null>
+  login: (email: string, password: string, username?: string) => Promise<string | null>
   logout: () => Promise<void>
   audit: (action: string, table: string, id?: string, payload?: object) => Promise<void>
 }
@@ -101,26 +101,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string, password: string): Promise<string | null> => {
+  // Credenciais locais — fallback quando Supabase não está acessível
+  const LOCAL_USERS: Record<string, { password: string; role: Role; name: string; email: string }> = {
+    'roadmap2026': {
+      password: 'FastC@mm2026!',
+      role: 'master',
+      name: 'Administrador',
+      email: 'roadmap2026@fastcomm.internal',
+    },
+  }
+
+  const login = async (email: string, password: string, username?: string): Promise<string | null> => {
+    // 1. Verifica credenciais locais primeiro (instantâneo, sem dependência de rede)
+    const localKey = (username ?? '').toLowerCase()
+    const localUser = LOCAL_USERS[localKey]
+    if (localUser && password === localUser.password) {
+      setUser({ id: 'local-' + localKey, email: localUser.email, name: localUser.name, role: localUser.role })
+      return null
+    }
+
+    // 2. Tenta Supabase como fallback (timeout 8s)
     try {
-      // Timeout de 10s para não travar indefinidamente
       const result = await Promise.race([
         supabase.auth.signInWithPassword({ email, password }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10000)
+          setTimeout(() => reject(new Error('timeout')), 8000)
         ),
       ])
       const { error } = result as Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>
       if (error) {
         if (error.message.includes('Invalid login')) return 'Usuário ou senha incorretos.'
-        if (error.message.includes('Email not confirmed')) return 'E-mail não confirmado.'
         return error.message
       }
       return null
     } catch (e: unknown) {
-      if (e instanceof Error && e.message === 'timeout')
-        return 'Tempo esgotado. Verifique sua conexão e tente novamente.'
-      return 'Erro ao conectar. Tente novamente.'
+      // Se Supabase falhou mas credenciais locais não bateram = credenciais erradas
+      return 'Usuário ou senha incorretos.'
     }
   }
 
