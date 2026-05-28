@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import LoginPage from './auth/LoginPage'
 import Roadmap from './Roadmap'
@@ -6,7 +6,20 @@ import { Loader2 } from 'lucide-react'
 
 function Gate() {
   const { user, loading } = useAuth()
+  const wasAuthenticated = useRef(false)
   const [showLogin, setShowLogin] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      // Usuário acabou de autenticar
+      wasAuthenticated.current = true
+      setShowLogin(false)
+    } else if (!loading && wasAuthenticated.current) {
+      // Usuário acabou de fazer logout → mostra tela de login
+      wasAuthenticated.current = false
+      setShowLogin(true)
+    }
+  }, [user, loading])
 
   if (loading) return (
     <div style={{
@@ -24,13 +37,12 @@ function Gate() {
   // Usuário autenticado → roadmap completo
   if (user) return <Roadmap />
 
-  // Não autenticado: tela de login ou roadmap em modo leitura
+  // Acabou de fazer logout → tela de login
   if (showLogin) return <LoginPage />
 
-  // Modo público (viewer) — leitura sem login
+  // Primeiro acesso sem login → modo visualização pública
   return (
     <div>
-      {/* Banner de acesso público */}
       <div style={{
         background: '#0E1E3A', borderBottom: '1px solid rgba(133,183,235,0.2)',
         padding: '8px 20px', display: 'flex', alignItems: 'center',
