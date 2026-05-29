@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, ChevronLeft, Loader2, LayoutList, BarChart2, LogOut, ShieldCheck, Eye } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import { useDataLoader } from './lib/dataLoader'
 import logo from './assets/logo-fastcomm.png'
 import { useAuth } from './auth/AuthContext'
 
@@ -474,7 +475,9 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 export default function Roadmap() {
   const { user, isMaster, logout, audit } = useAuth()
 
-  // ── Cache local (stale-while-revalidate) ─────────────────────
+  // ── Load data with CDN-first strategy (viewers use /data.json, master uses Supabase) ──
+  const { data: loadedData, loading, error: loadError, retry } = useDataLoader({ isMaster })
+
   const CACHE_KEY = 'rm_items_cache_v2'
 
   const loadCache = (): BacklogItem[] => {
@@ -485,59 +488,36 @@ export default function Roadmap() {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}
   }
 
+  // Convert loaded data to BacklogItem format
+  const convertToBacklogItems = (data: ReturnType<typeof loadedData>): BacklogItem[] => {
+    if (!data) return []
+    return data.backlogs.map(b => ({
+      ...b,
+      tasks: data.tasks.filter(t => t.backlog_id === b.id) as any[],
+    }))
+  }
+
   const [items, setItems]         = useState<BacklogItem[]>(loadCache)
-  const [loading, setLoading]     = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  const [loadErrorMsg, setLoadErrorMsg] = useState('')
   const [saving, setSaving]       = useState(false)
   const [savedId, setSavedId]     = useState<string | null>(null)
   const [view, setView]           = useState<ViewMode>('list')
-  const [retryCount, setRetryCount] = useState(0)
+  const [loadErrorMsg, setLoadErrorMsg] = useState('')
+
+  // Update items when data loads
+  useEffect(() => {
+    if (loadedData) {
+      const converted = convertToBacklogItems(loadedData)
+      setItems(converted)
+      saveCache(converted)
+      setLoadErrorMsg('')
+    } else if (loadError) {
+      setLoadErrorMsg(loadError)
+    }
+  }, [loadedData, loadError])
 
   useEffect(() => {
     if (items.length > 0) saveCache(items)
   }, [items])
-
-  useEffect(() => {
-    let cancelled = false
-    setLoadError(false)
-
-    const timeout = setTimeout(() => {
-      if (!cancelled) { setLoading(false); setLoadError(true); setLoadErrorMsg('Timeout: servidor não respondeu em 15s') }
-    }, 15000)
-
-    async function load() {
-      try {
-        const [{ data: blData, error: blErr }, { data: tkData, error: tkErr }] = await Promise.all([
-          supabase.from('backlogs').select('*').order('position'),
-          supabase.from('tasks').select('*').order('position'),
-        ])
-        if (cancelled) return
-        if (blErr || tkErr) {
-          const err = blErr ?? tkErr
-          console.error('Load error', err)
-          setLoadErrorMsg(err?.message ?? 'Erro desconhecido')
-          setLoadError(true)
-          return
-        }
-        const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
-        const tasks    = (tkData ?? []) as Task[]
-        const merged   = backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) }))
-        setItems(merged)
-        saveCache(merged)
-        setLoadError(false)
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e)
-        console.error('Load failed', e)
-        if (!cancelled) { setLoadError(true); setLoadErrorMsg(msg) }
-      } finally {
-        clearTimeout(timeout)
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true; clearTimeout(timeout) }
-  }, [retryCount]) // retryCount força re-execução ao clicar "Tentar novamente"
 
   const totalBacklogs = items.length
   const totalTasks    = items.reduce((s, b) => s + b.tasks.length, 0)
@@ -776,7 +756,7 @@ export default function Roadmap() {
         )}
 
         {/* Erro de conexão — mostra mesmo se há cache (apenas aviso) */}
-        {!loading && loadError && (
+        {!loading && loadErrorMsg && (
           <div style={{ background: '#FFF8E1', border: '1.5px solid #FDE68A', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 20 }}>⚠️</span>
@@ -794,7 +774,7 @@ export default function Roadmap() {
             </div>
             <button
               type="button"
-              onClick={() => { setLoading(true); setRetryCount(c => c + 1) }}
+              onClick={retry}
               style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}
             >
               🔄 Tentar novamente
