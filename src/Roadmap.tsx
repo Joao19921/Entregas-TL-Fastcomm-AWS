@@ -485,27 +485,25 @@ export default function Roadmap() {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}
   }
 
-  const [items, setItems]         = useState<BacklogItem[]>(loadCache)  // inicia do cache
+  const [items, setItems]         = useState<BacklogItem[]>(loadCache)
   const [loading, setLoading]     = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving]       = useState(false)
   const [savedId, setSavedId]     = useState<string | null>(null)
   const [view, setView]           = useState<ViewMode>('list')
+  const [retryCount, setRetryCount] = useState(0)
 
-  // Persiste cache sempre que items muda (exceto array vazio inicial)
   useEffect(() => {
     if (items.length > 0) saveCache(items)
   }, [items])
 
   useEffect(() => {
     let cancelled = false
-
-    // Se há cache, não bloqueia a UI — apenas sincroniza em fundo
-    const hasCached = loadCache().length > 0
-    if (!hasCached) setLoading(true)
+    setLoadError(false)
 
     const timeout = setTimeout(() => {
-      if (!cancelled) setLoading(false)
-    }, 12000)
+      if (!cancelled) { setLoading(false); setLoadError(true) }
+    }, 15000)
 
     async function load() {
       try {
@@ -514,14 +512,20 @@ export default function Roadmap() {
           supabase.from('tasks').select('*').order('position'),
         ])
         if (cancelled) return
-        if (blErr || tkErr) { console.error('Load error', blErr ?? tkErr); return }
+        if (blErr || tkErr) {
+          console.error('Load error', blErr ?? tkErr)
+          setLoadError(true)
+          return
+        }
         const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
         const tasks    = (tkData ?? []) as Task[]
         const merged   = backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) }))
         setItems(merged)
         saveCache(merged)
+        setLoadError(false)
       } catch (e) {
         console.error('Load failed', e)
+        if (!cancelled) setLoadError(true)
       } finally {
         clearTimeout(timeout)
         if (!cancelled) setLoading(false)
@@ -529,7 +533,7 @@ export default function Roadmap() {
     }
     load()
     return () => { cancelled = true; clearTimeout(timeout) }
-  }, [])
+  }, [retryCount]) // retryCount força re-execução ao clicar "Tentar novamente"
 
   const totalBacklogs = items.length
   const totalTasks    = items.reduce((s, b) => s + b.tasks.length, 0)
@@ -759,10 +763,37 @@ export default function Roadmap() {
       {/* Content */}
       <main className="rm-main" style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-        {loading && (
+        {/* Loading — só bloqueia se não há cache */}
+        {loading && items.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#9CA3AF' }}>
             <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
             <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>Carregando dados...</p>
+          </div>
+        )}
+
+        {/* Erro de conexão — mostra mesmo se há cache (apenas aviso) */}
+        {!loading && loadError && (
+          <div style={{ background: '#FFF8E1', border: '1.5px solid #FDE68A', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20 }}>⚠️</span>
+              <div>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#92400E' }}>
+                  Falha ao sincronizar com o banco de dados
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#92400E', opacity: 0.8 }}>
+                  {items.length > 0
+                    ? 'Exibindo dados salvos localmente. Seus dados estão seguros.'
+                    : 'Não foi possível carregar os dados. Verifique sua conexão.'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setLoading(true); setRetryCount(c => c + 1) }}
+              style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}
+            >
+              🔄 Tentar novamente
+            </button>
           </div>
         )}
 
