@@ -473,30 +473,53 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 // ─── Main Component ───────────────────────────────────────────
 export default function Roadmap() {
   const { user, isMaster, logout, audit } = useAuth()
-  const [items, setItems]     = useState<BacklogItem[]>([])
-  const [loading, setLoading] = useState(true)
+
+  // ── Cache local (stale-while-revalidate) ─────────────────────
+  const CACHE_KEY = 'rm_items_cache_v2'
+
+  const loadCache = (): BacklogItem[] => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '[]') } catch { return [] }
+  }
+
+  const saveCache = (data: BacklogItem[]) => {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}
+  }
+
+  const [items, setItems]         = useState<BacklogItem[]>(loadCache)  // inicia do cache
+  const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
-  const [savedId, setSavedId]     = useState<string | null>(null) // ID do backlog recém-salvo
-  const [view, setView]       = useState<ViewMode>('list')
+  const [savedId, setSavedId]     = useState<string | null>(null)
+  const [view, setView]           = useState<ViewMode>('list')
+
+  // Persiste cache sempre que items muda (exceto array vazio inicial)
+  useEffect(() => {
+    if (items.length > 0) saveCache(items)
+  }, [items])
 
   useEffect(() => {
     let cancelled = false
+
+    // Se há cache, não bloqueia a UI — apenas sincroniza em fundo
+    const hasCached = loadCache().length > 0
+    if (!hasCached) setLoading(true)
+
     const timeout = setTimeout(() => {
-      if (!cancelled) setLoading(false) // desiste após 8s
-    }, 8000)
+      if (!cancelled) setLoading(false)
+    }, 12000)
 
     async function load() {
       try {
-        setLoading(true)
         const [{ data: blData, error: blErr }, { data: tkData, error: tkErr }] = await Promise.all([
           supabase.from('backlogs').select('*').order('position'),
           supabase.from('tasks').select('*').order('position'),
         ])
         if (cancelled) return
-        if (blErr || tkErr) { console.error('Load error', blErr ?? tkErr); setLoading(false); return }
+        if (blErr || tkErr) { console.error('Load error', blErr ?? tkErr); return }
         const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
         const tasks    = (tkData ?? []) as Task[]
-        setItems(backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) })))
+        const merged   = backlogs.map(b => ({ ...b, tasks: tasks.filter(t => t.backlog_id === b.id) }))
+        setItems(merged)
+        saveCache(merged)
       } catch (e) {
         console.error('Load failed', e)
       } finally {

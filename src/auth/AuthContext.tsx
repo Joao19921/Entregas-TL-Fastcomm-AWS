@@ -52,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const done = () => { if (mounted) setLoading(false) }
 
-    // Fallback: máximo 5 segundos de loading — NÃO apaga a sessão
-    const fallback = setTimeout(done, 5000)
+    // Fallback: máximo 10 segundos de loading — NÃO apaga a sessão
+    const fallback = setTimeout(done, 10000)
 
     async function init() {
       try {
