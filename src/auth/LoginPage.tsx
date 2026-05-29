@@ -12,14 +12,17 @@ function resolveEmail(input: string): string {
   return USER_MAP[key] ?? (input.includes('@') ? input.trim() : input.trim())
 }
 
+const REMEMBER_KEY = 'rm_last_user'
+
 export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void }) {
   const { login } = useAuth()
-  const [identifier, setIdentifier] = useState('')
+  const [identifier, setIdentifier] = useState(() => localStorage.getItem(REMEMBER_KEY) ?? '')
   const [password, setPassword]     = useState('')
   const [error, setError]           = useState('')
   const [loading, setLoading]       = useState(false)
   const [showPwd, setShowPwd]       = useState(false)
   const [timedOut, setTimedOut]     = useState(false)
+  const [remember, setRemember]     = useState(() => !!localStorage.getItem(REMEMBER_KEY))
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -32,6 +35,10 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
       setError('')
     } else if (err) {
       setError(err)
+    } else {
+      // Login bem-sucedido — salva usuário se "lembrar" marcado
+      if (remember) localStorage.setItem(REMEMBER_KEY, identifier.trim())
+      else localStorage.removeItem(REMEMBER_KEY)
     }
     setLoading(false)
   }
@@ -90,6 +97,7 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
               type="text"
               value={identifier}
               onChange={e => setIdentifier(e.target.value)}
+              name="username"
               placeholder="Seu usuário ou e-mail"
               autoComplete="username"
               style={{
@@ -113,6 +121,7 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
                 type={showPwd ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                name="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
                 style={{
@@ -164,6 +173,17 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
           >
             {loading ? 'Autenticando...' : 'Entrar'}
           </button>
+
+          {/* Lembrar-me */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, cursor: 'pointer', userSelect: 'none' as const }}>
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={e => setRemember(e.target.checked)}
+              style={{ width: 15, height: 15, accentColor: '#0E1E3A', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 13, color: '#6B7280' }}>Lembrar meu usuário</span>
+          </label>
         </form>
 
         </>}
