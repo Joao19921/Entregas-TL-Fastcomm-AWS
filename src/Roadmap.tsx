@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, ChevronLeft, Loader2, LayoutList, BarChart2, LogOut, ShieldCheck, Eye } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import { useDataLoader } from './lib/dataLoader'
 import logo from './assets/logo-fastcomm.png'
 import { useAuth } from './auth/AuthContext'
 
@@ -474,7 +475,9 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 export default function Roadmap() {
   const { user, isMaster, logout, audit } = useAuth()
 
-  // ── Cache local (stale-while-revalidate) ─────────────────────
+  // ── Load data with CDN-first strategy (viewers use /data.json, master uses Supabase) ──
+  const { data: loadedData, loading, error: loadError, retry } = useDataLoader({ isMaster })
+
   const CACHE_KEY = 'rm_items_cache_v2'
 
   const loadCache = (): BacklogItem[] => {
@@ -485,14 +488,32 @@ export default function Roadmap() {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}
   }
 
+  // Convert loaded data to BacklogItem format
+  const convertToBacklogItems = (data: ReturnType<typeof loadedData>): BacklogItem[] => {
+    if (!data) return []
+    return data.backlogs.map(b => ({
+      ...b,
+      tasks: data.tasks.filter(t => t.backlog_id === b.id) as any[],
+    }))
+  }
+
   const [items, setItems]         = useState<BacklogItem[]>(loadCache)
-  const [loading, setLoading]     = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  const [loadErrorMsg, setLoadErrorMsg] = useState('')
   const [saving, setSaving]       = useState(false)
   const [savedId, setSavedId]     = useState<string | null>(null)
   const [view, setView]           = useState<ViewMode>('list')
-  const [retryCount, setRetryCount] = useState(0)
+  const [loadErrorMsg, setLoadErrorMsg] = useState('')
+
+  // Update items when data loads
+  useEffect(() => {
+    if (loadedData) {
+      const converted = convertToBacklogItems(loadedData)
+      setItems(converted)
+      saveCache(converted)
+      setLoadErrorMsg('')
+    } else if (loadError) {
+      setLoadErrorMsg(loadError)
+    }
+  }, [loadedData, loadError])
 
   useEffect(() => {
     if (items.length > 0) saveCache(items)
@@ -792,7 +813,7 @@ export default function Roadmap() {
         )}
 
         {/* Erro de conexão — mostra mesmo se há cache (apenas aviso) */}
-        {!loading && loadError && (
+        {!loading && loadErrorMsg && (
           <div style={{ background: '#FFF8E1', border: '1.5px solid #FDE68A', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 20 }}>⚠️</span>
@@ -810,7 +831,7 @@ export default function Roadmap() {
             </div>
             <button
               type="button"
-              onClick={() => { setLoading(true); setRetryCount(c => c + 1) }}
+              onClick={retry}
               style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}
             >
               🔄 Tentar novamente
