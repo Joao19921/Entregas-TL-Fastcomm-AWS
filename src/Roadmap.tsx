@@ -376,8 +376,9 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
                   const rightPct = dayPct(b.end)
                   const widthPct = Math.max(rightPct - leftPct, 100 / WINDOW_DAYS)
                   const barColor = STATUS_BAR[b.status] ?? '#85B7EB'
-                  const done     = b.tasks.filter(t => t.status === 'Concluído').length
-                  const prog     = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
+                  const totalH   = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
+                  const doneH    = b.tasks.filter(t => t.status === 'Concluído').reduce((s, t) => s + (t.days || 0), 0)
+                  const prog     = totalH > 0 ? Math.round(doneH / totalH * 100) : 0
                   const label    = `${b.name} (${b.totalHours}h)`
 
                   return (
@@ -555,10 +556,19 @@ export default function Roadmap() {
 
   const patchB = async (id: string, patch: Partial<BacklogItem>) => {
     if (!isMaster) return
+    // Salva o estado anterior para rollback em caso de erro
+    const prev = items.find(b => b.id === id)
     setItems(p => p.map(b => b.id === id ? { ...b, ...patch } : b))
     setSaving(true)
-    await supabase.from('backlogs').update(patch).eq('id', id)
-    await audit('UPDATE', 'backlogs', id, patch)
+    const { error } = await supabase.from('backlogs').update(patch).eq('id', id)
+    if (error) {
+      // Rollback visual se Supabase falhou
+      if (prev) setItems(p => p.map(b => b.id === id ? prev : b))
+      console.error('[patchB] Erro ao salvar backlog:', error.message)
+      alert(`Erro ao salvar: ${error.message}\nVerifique sua conexão ou faça login novamente.`)
+    } else {
+      await audit('UPDATE', 'backlogs', id, patch)
+    }
     setSaving(false)
   }
 
@@ -580,10 +590,18 @@ export default function Roadmap() {
 
   const patchT = async (bid: string, tid: string, patch: Partial<Task>) => {
     if (!isMaster) return
+    const prevTask = items.find(b => b.id === bid)?.tasks.find(t => t.id === tid)
     setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.map(t => t.id === tid ? { ...t, ...patch } : t) }))
     setSaving(true)
-    await supabase.from('tasks').update(patch).eq('id', tid)
-    await audit('UPDATE', 'tasks', tid, patch)
+    const { error } = await supabase.from('tasks').update(patch).eq('id', tid)
+    if (error) {
+      // Rollback visual
+      if (prevTask) setItems(p => p.map(b => b.id !== bid ? b : { ...b, tasks: b.tasks.map(t => t.id === tid ? prevTask : t) }))
+      console.error('[patchT] Erro ao salvar task:', error.message)
+      alert(`Erro ao salvar: ${error.message}\nVerifique sua conexão ou faça login novamente.`)
+    } else {
+      await audit('UPDATE', 'tasks', tid, patch)
+    }
     setSaving(false)
   }
 
@@ -742,8 +760,8 @@ export default function Roadmap() {
             {items.map(b => {
               const bHours   = b.tasks.reduce((s, t) => s + (t.days || 0), 0)
               const bDays    = Math.ceil(bHours / 8) || 0
-              const done     = b.tasks.filter(t => t.status === 'Concluído').length
-              const progress = b.tasks.length ? Math.round(done / b.tasks.length * 100) : 0
+              const doneH    = b.tasks.filter(t => t.status === 'Concluído').reduce((s, t) => s + (t.days || 0), 0)
+              const progress = bHours > 0 ? Math.round(doneH / bHours * 100) : 0
               const endDate  = b.start_date && bDays > 0 ? toISO(addWorkDays(parseDate(b.start_date), bDays)) : null
 
               return (
