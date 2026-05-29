@@ -785,8 +785,8 @@ export default function Roadmap() {
           </div>
         )}
 
-        {/* Erro de conexão — mostra mesmo se há cache (apenas aviso) */}
-        {!loading && loadErrorMsg && (
+        {/* Erro de conexão — só aparece se a tela está vazia */}
+        {!loading && loadErrorMsg && items.length === 0 && (
           <div style={{ background: '#FFF8E1', border: '1.5px solid #FDE68A', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 20 }}>⚠️</span>

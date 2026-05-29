@@ -1,9 +1,9 @@
-name: Backup Semanal Supabase
+name: Backup e Snapshot CDN
 
 on:
   schedule:
-    - cron: '0 6 * * 1'  # toda segunda-feira às 06:00 UTC (03:00 Brasília)
-  workflow_dispatch:       # permite rodar manualmente pelo GitHub
+    - cron: '0 * * * *'   # todo hora — mantém data.json atualizado
+  workflow_dispatch:        # disparo manual pelo GitHub
 
 permissions:
   contents: write
@@ -32,7 +32,7 @@ jobs:
             "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/tasks?select=*&order=position" \
             -o /tmp/tasks.json
 
-      - name: Montar arquivo de backup
+      - name: Gerar data.json (CDN snapshot) e backup datado
         run: |
           mkdir -p backups
           DATE=$(date -u +"%Y-%m-%d")
@@ -43,28 +43,24 @@ jobs:
               ...b,
               tasks: tasks.filter(t => t.backlog_id === b.id)
             }));
-            const out = {
-              exported_at: new Date().toISOString(),
-              backlogs: merged
-            };
+            // data.json para CDN (carregamento instantâneo)
+            require('fs').writeFileSync('data.json', JSON.stringify(merged));
+            // backup datado
             require('fs').writeFileSync(
               'backups/$DATE.json',
-              JSON.stringify(out, null, 2)
+              JSON.stringify({ exported_at: new Date().toISOString(), backlogs: merged }, null, 2)
             );
-            console.log('Backup gerado: backups/$DATE.json');
-            console.log('Backlogs:', backlogs.length, '| Tasks:', tasks.length);
+            console.log('Snapshot CDN + backup gerados. Backlogs:', backlogs.length, '| Tasks:', tasks.length);
           "
 
       - name: Manter apenas os últimos 12 backups
         run: |
           cd backups
           ls -t *.json 2>/dev/null | tail -n +13 | xargs -r rm --
-          echo "Backups mantidos:"
-          ls -lh *.json 2>/dev/null || echo "(nenhum ainda)"
 
-      - name: Commitar backup
+      - name: Commitar snapshot e backup
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "backup: exportação automática Supabase ${{ github.run_id }}"
-          file_pattern: "backups/*.json"
+          commit_message: "snapshot: atualiza data.json e backup CDN [skip ci]"
+          file_pattern: "data.json backups/*.json"
           commit_author: "GitHub Actions <actions@github.com>"
