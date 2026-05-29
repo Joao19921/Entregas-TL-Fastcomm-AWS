@@ -69,12 +69,27 @@ function formatDate(s: string): string {
   return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`
 }
 
-// ─── InlineEdit ───────────────────────────────────────────────
+// ─── InlineEdit com debounce — salva 800ms após parar de digitar ──────────────
 function InlineEdit({ value, onChange, placeholder = '—', readonly = false }: { value: string; onChange: (v: string) => void; placeholder?: string; readonly?: boolean }) {
-  const [on, setOn] = useState(false)
-  const [v, setV]   = useState(value)
+  const [on, setOn]   = useState(false)
+  const [v, setV]     = useState(value)
+  const timer         = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => { if (!on) setV(value) }, [value, on])
-  const ok = () => { onChange(v.trim()); setOn(false) }
+
+  const flush = (val: string) => {
+    if (timer.current) clearTimeout(timer.current)
+    onChange(val.trim())
+  }
+
+  const handleChange = (newVal: string) => {
+    setV(newVal)
+    // Debounce: salva 800ms após parar de digitar
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => onChange(newVal.trim()), 800)
+  }
+
+  const ok = () => { flush(v); setOn(false) }
 
   if (readonly) return (
     <span style={{ display: 'block', color: value ? 'inherit' : '#CBD5E1', fontStyle: value ? 'normal' : 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -83,8 +98,9 @@ function InlineEdit({ value, onChange, placeholder = '—', readonly = false }: 
   )
   if (on) return (
     <input autoFocus value={v} placeholder={placeholder}
-      onChange={e => setV(e.target.value)} onBlur={ok}
-      onKeyDown={e => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') setOn(false) }}
+      onChange={e => handleChange(e.target.value)}
+      onBlur={ok}
+      onKeyDown={e => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') { if (timer.current) clearTimeout(timer.current); setOn(false) } }}
       style={{ border: '1.5px solid #85B7EB', borderRadius: 4, padding: '2px 7px', fontSize: 'inherit', fontFamily: 'inherit', width: '100%', outline: 'none', boxSizing: 'border-box' as const, background: '#fff' }} />
   )
   return (
@@ -92,6 +108,38 @@ function InlineEdit({ value, onChange, placeholder = '—', readonly = false }: 
       style={{ cursor: 'text', display: 'block', color: value ? 'inherit' : '#CBD5E1', fontStyle: value ? 'normal' : 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {value || placeholder}
     </span>
+  )
+}
+
+// ─── DepNotesField — textarea com debounce 800ms ──────────────
+function DepNotesField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [local, setLocal] = useState(value)
+  const timer             = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => { setLocal(value) }, [value])
+
+  const handle = (v: string) => {
+    setLocal(v)
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => onChange(v), 800)
+  }
+
+  return (
+    <textarea
+      value={local}
+      onChange={e => handle(e.target.value)}
+      onBlur={() => { if (timer.current) clearTimeout(timer.current); onChange(local) }}
+      placeholder="Descreva a dependência externa, responsável, prazo ou impacto..."
+      rows={2}
+      style={{
+        width: '100%', boxSizing: 'border-box' as const,
+        border: '1px solid #FDE68A', borderRadius: 6, padding: '7px 10px',
+        fontSize: 12, fontFamily: 'inherit', color: '#374151',
+        background: '#fff', outline: 'none', resize: 'vertical' as const,
+        lineHeight: 1.5,
+      }}
+      onFocus={e => (e.currentTarget.style.borderColor = '#EF9F27')}
+    />
   )
 }
 
@@ -790,20 +838,9 @@ export default function Roadmap() {
                           Observação sobre a dependência
                         </p>
                         {isMaster ? (
-                          <textarea
+                          <DepNotesField
                             value={b.dep_notes}
-                            onChange={e => patchB(b.id, { dep_notes: e.target.value })}
-                            placeholder="Descreva a dependência externa, responsável, prazo ou impacto..."
-                            rows={2}
-                            style={{
-                              width: '100%', boxSizing: 'border-box' as const,
-                              border: '1px solid #FDE68A', borderRadius: 6, padding: '7px 10px',
-                              fontSize: 12, fontFamily: 'inherit', color: '#374151',
-                              background: '#fff', outline: 'none', resize: 'vertical' as const,
-                              lineHeight: 1.5,
-                            }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#EF9F27')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#FDE68A')}
+                            onChange={v => patchB(b.id, { dep_notes: v })}
                           />
                         ) : (
                           <p style={{ margin: 0, fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
