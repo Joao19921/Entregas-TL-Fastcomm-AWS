@@ -19,14 +19,20 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
   const [error, setError]           = useState('')
   const [loading, setLoading]       = useState(false)
   const [showPwd, setShowPwd]       = useState(false)
+  const [timedOut, setTimedOut]     = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (!identifier || !password) { setError('Preencha usuário e senha.'); return }
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setTimedOut(false)
     const email = resolveEmail(identifier)
     const err = await login(email, password, identifier.trim())
-    if (err) setError(err)
+    if (err === '__timeout__') {
+      setTimedOut(true)
+      setError('')
+    } else if (err) {
+      setError(err)
+    }
     setLoading(false)
   }
 
@@ -41,7 +47,29 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
         background: 'white', borderRadius: 16, padding: '48px 44px', width: '100%', maxWidth: 420,
         boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
       }}>
+        {/* Timeout state */}
+        {timedOut && (
+          <div style={{ textAlign: 'center', padding: '8px 0 24px' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⏱️</div>
+            <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#0E1E3A' }}>
+              Conexão lenta detectada
+            </p>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+              O servidor demorou mais de 30 segundos.<br/>Verifique sua internet e tente novamente.
+            </p>
+            <button type="button" onClick={() => handleSubmit()}
+              style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12, width: '100%' }}>
+              🔄 Tentar novamente
+            </button>
+            <button type="button" onClick={() => setTimedOut(false)}
+              style={{ background: 'none', color: '#6B7280', border: 'none', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Voltar ao formulário
+            </button>
+          </div>
+        )}
+
         {/* Logo */}
+        {!timedOut && <>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <img src={logo} alt="Fastcomm" style={{ height: 38, width: 'auto', marginBottom: 20 }} />
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0E1E3A', letterSpacing: -0.3 }}>
@@ -137,6 +165,8 @@ export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void 
             {loading ? 'Autenticando...' : 'Entrar'}
           </button>
         </form>
+
+        </>}
 
         {/* Visitor access */}
         {onViewerMode && (
