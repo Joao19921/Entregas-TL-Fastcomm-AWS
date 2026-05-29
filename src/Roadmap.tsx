@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, ChevronLeft, Loader2, LayoutList, BarChart2, LogOut, ShieldCheck, Eye } from 'lucide-react'
 import { supabase } from './lib/supabase'
-import { useDataLoader } from './lib/dataLoader'
+
 import logo from './assets/logo-fastcomm.png'
 import { useAuth } from './auth/AuthContext'
 
@@ -481,24 +481,12 @@ export default function Roadmap() {
 
   const [items, setItems]           = useState<BacklogItem[]>(loadCache)
   const [loading, setLoading]       = useState(true)
-  const [loadError, setLoadError]   = useState(false)
+  const [_loadError, setLoadError]   = useState(false)
   const [loadErrorMsg, setLoadErrorMsg] = useState('')
   const [saving, setSaving]         = useState(false)
   const [savedId, setSavedId]       = useState<string | null>(null)
   const [view, setView]             = useState<ViewMode>('list')
   const [retryCount, setRetryCount] = useState(0)
-
-  // Update items when data loads
-  useEffect(() => {
-    if (loadedData) {
-      const converted = convertToBacklogItems(loadedData)
-      setItems(converted)
-      saveCache(converted)
-      setLoadErrorMsg('')
-    } else if (loadError) {
-      setLoadErrorMsg(loadError)
-    }
-  }, [loadedData, loadError])
 
   useEffect(() => {
     if (items.length > 0) saveCache(items)
@@ -816,7 +804,7 @@ export default function Roadmap() {
             </div>
             <button
               type="button"
-              onClick={retry}
+              onClick={() => { setLoading(true); setRetryCount(c => c + 1) }}
               style={{ background: '#0E1E3A', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}
             >
               🔄 Tentar novamente

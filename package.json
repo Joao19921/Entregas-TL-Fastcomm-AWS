@@ -8,9 +8,8 @@
     "dev": "vite",
     "test": "vitest run",
     "prebuild": "node -e \"require('fs').copyFileSync('index.src.html','index.html')\"",
-    "build": "tsc -b && vite build && npm run postbuild:export",
+    "build": "tsc -b && vite build",
     "postbuild": "node -e \"require('fs').copyFileSync('index.src.html','index.html')\"",
-    "postbuild:export": "node scripts/export-data.js",
     "export-data": "node scripts/export-data.js",
     "preview": "vite preview"
   },

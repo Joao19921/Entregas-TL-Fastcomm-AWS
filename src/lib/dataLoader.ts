@@ -28,7 +28,7 @@ interface UseDataLoaderOptions {
  * Timeout: 15s per attempt, retry with exponential backoff (1s, 2s, 4s)
  */
 export function useDataLoader(options: UseDataLoaderOptions = {}) {
-  const { isMaster = false, cacheKey = 'rm_data_cache_v1', timeout = 15000, maxRetries = 3 } = options
+  const { isMaster = false, cacheKey = 'rm_data_cache_v1', timeout = 15000, maxRetries: _maxRetries = 3 } = options
 
   const [data, setData] = useState<BacklogData | null>(null)
   const [loading, setLoading] = useState(true)
