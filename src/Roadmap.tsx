@@ -503,11 +503,30 @@ export default function Roadmap() {
     setLoadError(false)
 
     const timeout = setTimeout(() => {
-      if (!cancelled) { setLoading(false); setLoadError(true); setLoadErrorMsg('Timeout: servidor não respondeu em 15s') }
-    }, 15000)
+      if (!cancelled) { setLoading(false); setLoadError(true); setLoadErrorMsg('Timeout: servidor não respondeu') }
+    }, 20000)
 
     async function load() {
       try {
+        // ── 1. CDN-first: tenta /data.json (GitHub Pages — instantâneo) ──
+        const base = import.meta.env.BASE_URL ?? '/'
+        try {
+          const res = await fetch(`${base}data.json?t=${Date.now()}`, { cache: 'no-store' })
+          if (res.ok) {
+            const cdnData: BacklogItem[] = await res.json()
+            if (!cancelled && cdnData.length > 0) {
+              setItems(cdnData)
+              saveCache(cdnData)
+              setLoadError(false)
+              setLoading(false)
+              clearTimeout(timeout)
+            }
+          }
+        } catch { /* CDN falhou, continua para Supabase */ }
+
+        if (cancelled) return
+
+        // ── 2. Supabase em background para sincronização ─────────────────
         const [{ data: blData, error: blErr }, { data: tkData, error: tkErr }] = await Promise.all([
           supabase.from('backlogs').select('*').order('position'),
           supabase.from('tasks').select('*').order('position'),
@@ -515,9 +534,7 @@ export default function Roadmap() {
         if (cancelled) return
         if (blErr || tkErr) {
           const err = blErr ?? tkErr
-          console.error('Load error', err)
-          setLoadErrorMsg(err?.message ?? 'Erro desconhecido')
-          setLoadError(true)
+          if (items.length === 0) { setLoadErrorMsg(err?.message ?? 'Erro'); setLoadError(true) }
           return
         }
         const backlogs = (blData ?? []) as Omit<BacklogItem, 'tasks'>[]
@@ -528,8 +545,7 @@ export default function Roadmap() {
         setLoadError(false)
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
-        console.error('Load failed', e)
-        if (!cancelled) { setLoadError(true); setLoadErrorMsg(msg) }
+        if (!cancelled && items.length === 0) { setLoadError(true); setLoadErrorMsg(msg) }
       } finally {
         clearTimeout(timeout)
         if (!cancelled) setLoading(false)
