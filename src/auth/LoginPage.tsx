@@ -12,7 +12,7 @@ function resolveEmail(input: string): string {
   return USER_MAP[key] ?? (input.includes('@') ? input.trim() : input.trim())
 }
 
-export default function LoginPage() {
+export default function LoginPage({ onViewerMode }: { onViewerMode?: () => void }) {
   const { login } = useAuth()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword]     = useState('')
@@ -138,8 +138,33 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* Visitor access */}
+        {onViewerMode && (
+          <div style={{ textAlign: 'center', marginTop: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+              <span style={{ fontSize: 11, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ou</span>
+              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+            </div>
+            <button
+              type="button"
+              onClick={onViewerMode}
+              style={{
+                width: '100%', padding: '11px', background: '#F9FAFB',
+                color: '#374151', border: '1.5px solid #E5E7EB', borderRadius: 8,
+                fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.borderColor = '#D1D5DB' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = '#E5E7EB' }}
+            >
+              👁️ Entrar como visitante
+            </button>
+          </div>
+        )}
+
         {/* Footer */}
-        <p style={{ textAlign: 'center', marginTop: 28, fontSize: 11, color: '#9CA3AF' }}>
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#9CA3AF' }}>
           Acesso restrito · Entre em contato com o administrador para solicitar acesso
         </p>
       </div>

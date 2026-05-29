@@ -38,7 +38,7 @@ function Gate() {
   if (user) return <Roadmap />
 
   // Acabou de fazer logout → tela de login
-  if (showLogin) return <LoginPage />
+  if (showLogin) return <LoginPage onViewerMode={() => setShowLogin(false)} />
 
   // Primeiro acesso sem login → modo visualização pública
   return (
