@@ -475,33 +475,18 @@ function TimelineView({ items }: { items: BacklogItem[] }) {
 export default function Roadmap() {
   const { user, isMaster, logout, audit } = useAuth()
 
-  // ── Load data with CDN-first strategy (viewers use /data.json, master uses Supabase) ──
-  const { data: loadedData, loading, error: loadError, retry } = useDataLoader({ isMaster })
-
   const CACHE_KEY = 'rm_items_cache_v2'
+  const loadCache = (): BacklogItem[] => { try { return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '[]') } catch { return [] } }
+  const saveCache = (data: BacklogItem[]) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {} }
 
-  const loadCache = (): BacklogItem[] => {
-    try { return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '[]') } catch { return [] }
-  }
-
-  const saveCache = (data: BacklogItem[]) => {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}
-  }
-
-  // Convert loaded data to BacklogItem format
-  const convertToBacklogItems = (data: ReturnType<typeof loadedData>): BacklogItem[] => {
-    if (!data) return []
-    return data.backlogs.map(b => ({
-      ...b,
-      tasks: data.tasks.filter(t => t.backlog_id === b.id) as any[],
-    }))
-  }
-
-  const [items, setItems]         = useState<BacklogItem[]>(loadCache)
-  const [saving, setSaving]       = useState(false)
-  const [savedId, setSavedId]     = useState<string | null>(null)
-  const [view, setView]           = useState<ViewMode>('list')
+  const [items, setItems]           = useState<BacklogItem[]>(loadCache)
+  const [loading, setLoading]       = useState(true)
+  const [loadError, setLoadError]   = useState(false)
   const [loadErrorMsg, setLoadErrorMsg] = useState('')
+  const [saving, setSaving]         = useState(false)
+  const [savedId, setSavedId]       = useState<string | null>(null)
+  const [view, setView]             = useState<ViewMode>('list')
+  const [retryCount, setRetryCount] = useState(0)
 
   // Update items when data loads
   useEffect(() => {
