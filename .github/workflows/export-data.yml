@@ -1,0 +1,38 @@
+name: Sync Data to CDN
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/export-data.js'
+      - '.github/workflows/export-data.yml'
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Export data to public/data.json
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node scripts/export-data.js
+
+      - name: Commit data.json if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          if git diff --quiet public/data.json; then
+            echo "✓ No changes to data.json"
+          else
+            git add public/data.json
+            git commit -m "data: sync from Supabase [skip ci]"
+            git push
+          fi
