@@ -488,6 +488,7 @@ export default function Roadmap() {
   const [items, setItems]         = useState<BacklogItem[]>(loadCache)
   const [loading, setLoading]     = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [loadErrorMsg, setLoadErrorMsg] = useState('')
   const [saving, setSaving]       = useState(false)
   const [savedId, setSavedId]     = useState<string | null>(null)
   const [view, setView]           = useState<ViewMode>('list')
@@ -502,7 +503,7 @@ export default function Roadmap() {
     setLoadError(false)
 
     const timeout = setTimeout(() => {
-      if (!cancelled) { setLoading(false); setLoadError(true) }
+      if (!cancelled) { setLoading(false); setLoadError(true); setLoadErrorMsg('Timeout: servidor não respondeu em 15s') }
     }, 15000)
 
     async function load() {
@@ -513,7 +514,9 @@ export default function Roadmap() {
         ])
         if (cancelled) return
         if (blErr || tkErr) {
-          console.error('Load error', blErr ?? tkErr)
+          const err = blErr ?? tkErr
+          console.error('Load error', err)
+          setLoadErrorMsg(err?.message ?? 'Erro desconhecido')
           setLoadError(true)
           return
         }
@@ -524,8 +527,9 @@ export default function Roadmap() {
         saveCache(merged)
         setLoadError(false)
       } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
         console.error('Load failed', e)
-        if (!cancelled) setLoadError(true)
+        if (!cancelled) { setLoadError(true); setLoadErrorMsg(msg) }
       } finally {
         clearTimeout(timeout)
         if (!cancelled) setLoading(false)
@@ -783,7 +787,8 @@ export default function Roadmap() {
                 <p style={{ margin: '2px 0 0', fontSize: 12, color: '#92400E', opacity: 0.8 }}>
                   {items.length > 0
                     ? 'Exibindo dados salvos localmente. Seus dados estão seguros.'
-                    : 'Não foi possível carregar os dados. Verifique sua conexão.'}
+                    : 'Não foi possível carregar os dados.'}
+                  {loadErrorMsg ? ` · ${loadErrorMsg}` : ''}
                 </p>
               </div>
             </div>
