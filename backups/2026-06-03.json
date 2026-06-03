@@ -1,0 +1,75 @@
+{
+  "exported_at": "2026-06-03T02:45:47.126Z",
+  "backlogs": [
+    {
+      "id": "7kq8kj5ccmempqvt48u",
+      "name": "Atualização On-premise Moinhos",
+      "scope": "",
+      "priority": "Média",
+      "status": "Backlog",
+      "external_dep": true,
+      "expanded": true,
+      "position": 0,
+      "start_date": "2026-05-29",
+      "created_at": "2026-05-29T12:11:55.8039+00:00",
+      "dep_notes": "O cliente precisa dar apoio nos servidores e janela de manutenção. ",
+      "tasks": [
+        {
+          "id": "rt81dn8iphmpqvug2x",
+          "backlog_id": "7kq8kj5ccmempqvt48u",
+          "name": "Adicionar novo front-end no Fastcomm Onpremise",
+          "owner": "",
+          "days": 1,
+          "status": "Backlog",
+          "notes": "",
+          "position": 0,
+          "created_at": "2026-05-29T12:12:57.813852+00:00"
+        },
+        {
+          "id": "pcudpm8ztbnmpqvupfx",
+          "backlog_id": "7kq8kj5ccmempqvt48u",
+          "name": "Verificar direcionamento usando Nginx",
+          "owner": "",
+          "days": 1,
+          "status": "Backlog",
+          "notes": "",
+          "position": 1,
+          "created_at": "2026-05-29T12:13:09.916258+00:00"
+        },
+        {
+          "id": "eiw5dd05ofgmpqvv00m",
+          "backlog_id": "7kq8kj5ccmempqvt48u",
+          "name": "Atualizar para 1.5",
+          "owner": "",
+          "days": 1,
+          "status": "Backlog",
+          "notes": "",
+          "position": 2,
+          "created_at": "2026-05-29T12:13:23.615434+00:00"
+        },
+        {
+          "id": "oiucht2h5umpqvv6mz",
+          "backlog_id": "7kq8kj5ccmempqvt48u",
+          "name": "Instalação instancia clickhouse",
+          "owner": "",
+          "days": 1,
+          "status": "Backlog",
+          "notes": "",
+          "position": 3,
+          "created_at": "2026-05-29T12:13:32.206294+00:00"
+        },
+        {
+          "id": "vf7bges9dlmpqvvckd",
+          "backlog_id": "7kq8kj5ccmempqvt48u",
+          "name": "Configuração do Grafana SelfHosted",
+          "owner": "",
+          "days": 1,
+          "status": "Backlog",
+          "notes": "",
+          "position": 4,
+          "created_at": "2026-05-29T12:13:39.884449+00:00"
+        }
+      ]
+    }
+  ]
+}
